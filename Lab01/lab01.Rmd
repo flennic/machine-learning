@@ -1,0 +1,229 @@
+---
+title: "Machine Learning Lab 01"
+author: "Maximilian Pfundstein"
+date: "11/13/2018"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(readxl)
+set.seed(12345)
+```
+
+## Assignment 1 - Spam classification with Nearest Neighbors
+
+## Assignment 3 - Feature Selection by Cross-Validation in a Linear Model
+
+We are going to define two functions. The first one is doing the cross validation. We wil use this function for the feature selection.
+
+```{r}
+c_cross_validation = function(k = 5, Y, X) {
+
+  if (!is.numeric(X) && ncol(X) == 0) {
+    y_hat = mean(Y)
+    return(mean((y_hat-Y)^2))
+  }
+
+  Y = as.matrix(Y)
+  X = as.matrix(X)
+  X = cbind(1, X)
+
+  # Create a list of 5 matrices with the appropiate size (these will hold the subsets)
+  X_subsets = list()
+  Y_subsets = list()
+
+  # We fill the list entries with the subsets
+  for (i in 1:k) {
+    percentage_marker = nrow(X)/k
+    start = floor(percentage_marker*(i-1)+1)
+    end = floor(percentage_marker*i)
+    X_subsets[[i]] = X[start:end,]
+    Y_subsets[[i]] = Y[start:end]
+  }
+
+  # Now we take one matrix at a time for training and everything else as the testing
+  scores = 0
+  for (i in 1:k) {
+
+    ## Initial
+    X_train = matrix(0, ncol = ncol(X))
+    Y_train = c()
+
+    # Get validation and training data
+    current_subset_X = X_subsets[-i]
+    current_subset_Y = Y_subsets[-i]
+    for (j in 1:(length(X_subsets)-1)) {
+      X_train = rbind(X_train, current_subset_X[[j]])
+      Y_train = c(Y_train, current_subset_Y[[j]])
+    }
+
+    # Because of R
+    X_train = X_train[-1,]
+
+    # Model
+    betas = as.matrix((solve(t(X_train) %*% X_train)) %*% t(X_train) %*% Y_train)
+
+    ## Select the training data and transform them to one matrix X_test and one vector Y_test
+    X_val = X_subsets[[i]]
+    Y_val = Y_subsets[[i]]
+
+    ## Cut of the trailing 0, this is due to the fact that R is stupid
+    #X_test = X_test[-1,]
+    #Y_test = Y_test[-1]
+
+    ## Now we get our y_hat and y_real. y_real is only used to clarify the meaning
+    y_hat = as.vector(X_val %*% betas)
+    y_real = Y_val
+
+    ## Get MSE and add to the scores list
+    scores = c(scores, mean((y_hat - y_real)^2))
+
+  }
+  # Return the mean of our scores
+  scores = scores[-1]
+  return(mean(scores))
+}
+
+c_best_subset_selection = function(Y, X) {
+
+  # Shuffle X and Y via indexes
+  ids = sample(x = 1:nrow(X), nrow(X))
+  X = X[ids,]
+  Y = Y[ids]
+
+  # Get all combinations
+  comb_matrix = matrix(0, ncol = ncol(X))
+  for (i in c(1:(2^(ncol(X))-1))) {
+    comb_matrix = rbind(comb_matrix, tail(rev(as.numeric(intToBits(i))), ncol(X)))
+  }
+
+  results = c()
+
+  # Do cross validation for each feature set
+  for (j in 1:nrow(comb_matrix)) {
+    comb = as.logical(comb_matrix[j,])
+    feature_select = X[,comb]
+    res = c_cross_validation(5, Y, feature_select)
+    results = c(results, res)
+  }
+  models = matrix(results, ncol = 1)
+  models = cbind(models, comb_matrix)
+
+  # Add column with the sum of the features for plotting
+  feature_sum = c()
+  for (k in 1:nrow(comb_matrix)) {
+    row_sum = sum(comb_matrix[k,])
+    feature_sum = c(feature_sum, row_sum)
+  }
+  models = as.data.frame(cbind(feature_sum, models))
+  colnames(models)[1:2] = c("Sum", "Score")
+  print(ggplot(models, aes(x = Sum, y = Score, colour = factor(feature_sum))) +  geom_point()) + stat_summary(fun.y = min, colour = "red", geom = "point", size = 5)
+  return(models[min(models[,2]) == models[,2],])
+}
+```
+
+Let's have a look at the results:
+
+```{r}
+c_best_subset_selection(swiss[,1], swiss[,2:6])
+```
+## Assignment 4 - Linear Regression and Regularization
+
+### 4.1)
+
+```{r}
+
+tecator_data = read_excel("./tecator.xlsx")
+
+ggplot(tecator_data, aes(x = Protein, y = Moisture)) +  geom_point() + geom_smooth()
+
+## Do you think this data is described well by a linear model?
+
+```
+
+### 4.2)
+We know that the Model $M_i$ normally distributed an has an error $\epsilon$:
+
+$$M_i \sim N(\mu,\sigma^2)$$
+We know that the expected value is a polynomial function. The polynomal function looks like:
+
+$$E[M_i] = \mu = \beta_0 + \beta_1 * X + \beta_2 * X^2 + ... + \beta_{i-1}*X^{i-1}$$
+Let's write this down as a sum:
+
+$$ \mu = \sum_{n=0}^{i-1} \beta_n * X^n$$
+If we substite $\mu$ in the formula for the normal distribution, we get our model:
+
+$$M_i \sim N(\sum_{n=0}^{i-1} \beta_n * X^n ,\sigma^2)$$
+
+It's appropiate to use the MSE criterion due the properties that erros are always positive, so we can search for a minimum. Furthermor it highly punishes missclassified data.
+
+### 4.3)
+
+Let's create a data.frame for all the X.
+```{r}
+n = 6
+model_tecator_data = data.frame(Y = tecator_data$Moisture)
+for (i in c(1:n)) {
+  model_tecator_data = data.frame(model_tecator_data, (tecator_data$Protein)^i)
+}
+
+for (i in c(1:n)) {
+  names(model_tecator_data)[i+1] = paste("Protein", i, sep="")
+}
+
+# Shuffle
+ids = sample(x = 1:nrow(model_tecator_data), nrow(model_tecator_data))
+model_tecator_data = model_tecator_data[ids,]
+```
+
+Now we split the data into the training and validation data set.
+```{r}
+tecator_data_training = model_tecator_data[1:(nrow(model_tecator_data)/2),]
+tecator_data_validation = model_tecator_data[(nrow(model_tecator_data)/2):nrow(model_tecator_data),]
+```
+
+Let's create a dataframe to save the MSE of the training and validation dataset.
+
+```{r}
+results = data.frame(Iteration = as.character(), Training_SSE = as.numeric(), Validation_SSE = as.numeric()) 
+```
+
+We iterate n times, create our model, and save the SSE. Then we use the model for the training data the get the trainign SSE and save all of the results.
+
+```{r}
+for (i in c(1:n)) {
+  #Y_train = as.matrix(tecator_data_training[,1])
+  #X_train = as.matrix(tecator_data_training[,2:(1+i)])
+   
+  #X_valid = as.matrix(tecator_data_validation[,1])
+  #Y_valid = as.matrix(tecator_data_validation[,2:(1+i)]) 
+  # t(X_train) %*% X_train)
+  #betas = as.matrix((solve(t(X_train) %*% X_train)) %*% t(X_train) %*% Y_train)
+  
+  formula = "Y ~ Protein1"
+  
+  if (i != 1) {
+    for (j in c(2:i)) {
+      formula = paste(formula, " + Protein", j, sep="")
+    }
+  }
+  
+  linreg = lm(as.formula(formula), data = tecator_data_training)
+  mse_training = mean(linreg$residuals^2)
+  y_hat = predict(object = linreg, newdata = tecator_data_validation)
+  mse_validation = mean((y_hat - tecator_data_validation$Y)^2)
+  results = rbind(results, list(i, mse_training, mse_validation))
+}
+names(results) = list("Iteration", "MSE_Training", "MSE_Validation")
+print(results)
+```
+
+Lets plot that to get a better understanding of the values:
+
+```{r}
+ggplot(results) + geom_line(aes(x = Iteration, y = MSE_Training, colour = "red")) + geom_line(aes(x = Iteration, y = MSE_Validation, colour = "blue"))
+```
