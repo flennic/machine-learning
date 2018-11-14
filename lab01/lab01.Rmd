@@ -378,7 +378,7 @@ Lets plot that to get a better understanding of the values:
 ggplot(results) + geom_line(aes(x = Iteration, y = MSE_Training, colour = "Training")) + geom_line(aes(x = Iteration, y = MSE_Validation, colour = "Validation")) + labs(title="MSE vs Iteration", y="MSE", x="Iteration", color = "Legend") + scale_color_manual(values = c("blue", "orange"))
 ```
 
-The best model is the model that performs best on the validation data. In this case it's Model $M_i$. The bias-variance tradeoff is basically a different viewpoint on overfitting. If a model has a high variance but performing well on the training dataset, its probably overfitting. We don't see the exact values of the model here, but we can see that while the model with increasing i is working better on the training dataset, it performs worse on the validation data set. This is exactly due to the mentioned overfitting.
+The best model is the model that performs best on the validation data. In this case it's Model $M_1$. The bias-variance tradeoff is basically a different viewpoint on overfitting. If a model has a high variance but performing well on the training dataset, its probably overfitting. We don't see the exact values of the model here, but we can see that while the model with increasing i is working better on the training dataset, it performs worse on the validation data set. This is exactly due to the mentioned overfitting.
 
 ## 4.4)
 
@@ -419,7 +419,7 @@ glm_model_lasso = glmnet(as.matrix(covariates_ridge), response_ridge, alpha = 1,
 plot(glm_model_lasso, xvar="lambda", label=TRUE)
 ```
 
-Ridge Regression has the problem, that even with high $\lambda's$ the coefficients will never be zero, this would only be the case for $l  i  m_{\lambda\to\infty}$. This time the  *shrinkage panalty* is
+Ridge Regression has the problem, that even with high $\lambda's$ the coefficients will never be zero, this would only be the case for $l  i  m_{\lambda\to\infty}$. This time the  *shrinkage penalty* is
 
 $$ \lambda  \sum_{j} |\beta_{j}|$$
 Due to the fact that high $\lambda's$ can set the coefficients to zero, LASSO perform a *variable selection*. This is what can bee seen in the plot, with increasing $\ln(\lambda)$ more and more variables are set to 0.
