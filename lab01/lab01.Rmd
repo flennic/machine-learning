@@ -66,7 +66,7 @@ spam_not_detected_train = confusion_matrix_train[2,1]/sum(confusion_matrix_train
 mail_missclassified_train = confusion_matrix_train[1,2]/sum(confusion_matrix_train[,2])
 print(paste(sep = "", "Spam not detected: ", spam_not_detected_train))
 print(paste(sep = "", "Mail missclassified as spam: ", mail_missclassified_train))
-print(paste(sep ="", "Missclassification rate: "), confusion_matrix_train/sum(confusion_matrix_train)
+print(paste(sep ="", "Missclassification rate: ", (confusion_matrix_train[1,2]+confusion_matrix_train[2,1])/sum(confusion_matrix_train)))
 ```
 
 And not for the test data:
@@ -76,6 +76,49 @@ spam_not_detected_test = confusion_matrix_test[2,1]/sum(confusion_matrix_test[,1
 mail_missclassified_test = confusion_matrix_test[1,2]/sum(confusion_matrix_test[,2])
 print(paste(sep = "", "Spam not detected: ", spam_not_detected_test))
 print(paste(sep = "", "Mail missclassified as spam: ", mail_missclassified_test))
+print(paste(sep ="", "Missclassification rate: ", (confusion_matrix_test[1,2]+confusion_matrix_test[2,1])/sum(confusion_matrix_test)))
+```
+
+## 1.3)
+
+```{r}
+spambase_model_two = glm(as.formula("Spam ~ ."), data = train, family = "binomial")
+
+## train_two
+spambase_predict_train_two = predict(object = spambase_model_two, newdata = train, type = "response")
+spambase_predict_train_two = apply(as.matrix(spambase_predict_train_two), c(1), FUN = function(x) return(x > 0.9))
+confusion_matrix_train_two = as.matrix(table(spambase_predict_train_two, train$Spam))
+
+## test_two
+spambase_predict_test_two = predict(object = spambase_model_two, newdata = test, type = "response")
+spambase_predict_test_two = apply(as.matrix(spambase_predict_test_two), c(1), FUN = function(x) return(x > 0.9))
+confusion_matrix_test_two = as.matrix(table(spambase_predict_test_two, test$Spam))
+```
+Let's see what the confusion matrices look like. First one is for the train_twoing, second one is for the test_two data.
+
+```{r}
+print(confusion_matrix_train_two)
+print(confusion_matrix_test_two)
+```
+
+Missclassification rate for the training data:
+
+```{r}
+spam_not_detected_train_two = confusion_matrix_train_two[2,1]/sum(confusion_matrix_train_two[,1])
+mail_missclassified_train_two = confusion_matrix_train_two[1,2]/sum(confusion_matrix_train_two[,2])
+print(paste(sep = "", "Spam not detected: ", spam_not_detected_train_two))
+print(paste(sep = "", "Mail missclassified as spam: ", mail_missclassified_train_two))
+print(paste(sep ="", "Missclassification rate: ", (confusion_matrix_train_two[1,2]+confusion_matrix_train_two[2,1])/sum(confusion_matrix_train_two)))
+```
+
+And not for the test data:
+
+```{r}
+spam_not_detected_test_two = confusion_matrix_test_two[2,1]/sum(confusion_matrix_test_two[,1])
+mail_missclassified_test_two = confusion_matrix_test_two[1,2]/sum(confusion_matrix_test_two[,2])
+print(paste(sep = "", "Spam not detected: ", spam_not_detected_test_two))
+print(paste(sep = "", "Mail missclassified as spam: ", mail_missclassified_test_two))
+print(paste(sep ="", "Missclassification rate: ", (confusion_matrix_test_two[1,2]+confusion_matrix_test_two[2,1])/sum(confusion_matrix_test_two)))
 ```
 
 ## Assignment 3 - Feature Selection by Cross-Validation in a Linear Model
