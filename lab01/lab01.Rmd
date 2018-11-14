@@ -11,6 +11,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(readxl)
+library(MASS)
 set.seed(12345)
 ```
 
@@ -223,7 +224,23 @@ print(results)
 ```
 
 Lets plot that to get a better understanding of the values:
+```{r}
+ggplot(results) + geom_line(aes(x = Iteration, y = MSE_Training, colour = "Training")) + geom_line(aes(x = Iteration, y = MSE_Validation, colour = "Validation")) + labs(title="MSE vs Iteration", y="MSE", x="Iteration", color = "Legend") + scale_color_manual(values = c("blue", "orange"))
+```
+
+The best model is the model that performs best on the validation data. In this case it's Model $M_i$. The bias-variance tradeoff is basically a different viewpoint on overfitting. If a model has a high variance but performing well on the training dataset, its probably overfitting. We don't see the exact values of the model here, but we can see that while the model with increasing i is working better on the training dataset, it performs worse on the validation data set. This is exactly due to the mentioned overfitting.
+
+## 4.4)
 
 ```{r}
-ggplot(results) + geom_line(aes(x = Iteration, y = MSE_Training, colour = "red")) + geom_line(aes(x = Iteration, y = MSE_Validation, colour = "blue"))
+# Filtering of colums and then jsut using "Fat ~ ." would also be possible.
+c_formula = "Fat ~ Channel1"
+for (i in 2:100) {
+  c_formula = paste(c_formula, " + Channel", i, sep = "")
+}
+model = lm (formula = c_formula, data = tecator_data)
+model.stepAIC = stepAIC(model, direction = c("both"), trace = FALSE)
+summary(model.stepAIC)
 ```
+
+The model selected 63 channels producing a standard error of 1.107 and having 151 degrees of freedom.
