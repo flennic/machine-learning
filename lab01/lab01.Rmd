@@ -19,6 +19,65 @@ set.seed(12345)
 
 ## Assignment 1 - Spam classification with Nearest Neighbors
 
+## 1.1)
+Let's import the data and have a look at it.
+
+```{r}
+spambase = read_excel("./spambase.xlsx")
+head(spambase)
+```
+
+Split the spambase into training and validation:
+
+```{r}
+set.seed(12345)
+n = dim(spambase)[1]
+id = sample(1:n, floor(n*0.5))
+train = spambase[id,]
+test = spambase[-id,]
+```
+
+## 1.2)
+
+```{r}
+spambase_model = glm(as.formula("Spam ~ ."), data = train, family = "binomial")
+
+## Train
+spambase_predict_train = predict(object = spambase_model, newdata = train, type = "response")
+spambase_predict_train = apply(as.matrix(spambase_predict_train), c(1), FUN = function(x) return(x > 0.5))
+confusion_matrix_train = as.matrix(table(spambase_predict_train, train$Spam))
+
+## Test
+spambase_predict_test = predict(object = spambase_model, newdata = test, type = "response")
+spambase_predict_test = apply(as.matrix(spambase_predict_test), c(1), FUN = function(x) return(x > 0.5))
+confusion_matrix_test = as.matrix(table(spambase_predict_test, test$Spam))
+```
+Let's see what the confusion matrices look like. First one is for the training, second one is for the test data.
+
+```{r}
+print(confusion_matrix_train)
+print(confusion_matrix_test)
+```
+
+Missclassification rate for the training data:
+
+```{r}
+spam_not_detected_train = confusion_matrix_train[2,1]/sum(confusion_matrix_train[,1])
+mail_missclassified_train = confusion_matrix_train[1,2]/sum(confusion_matrix_train[,2])
+print(paste(sep = "", "Spam not detected: ", spam_not_detected_train))
+print(paste(sep = "", "Mail missclassified as spam: ", mail_missclassified_train))
+print(paste(sep ="", "Missclassification rate: "), confusion_matrix_train/sum(confusion_matrix_train)
+```
+
+And not for the test data:
+
+```{r}
+spam_not_detected_test = confusion_matrix_test[2,1]/sum(confusion_matrix_test[,1])
+mail_missclassified_test = confusion_matrix_test[1,2]/sum(confusion_matrix_test[,2])
+print(paste(sep = "", "Spam not detected: ", spam_not_detected_test))
+print(paste(sep = "", "Mail missclassified as spam: ", mail_missclassified_test))
+```
+
 ## Assignment 3 - Feature Selection by Cross-Validation in a Linear Model
 
 We are going to define two functions. The first one is doing the cross validation. We wil use this function for the feature selection.
@@ -138,10 +197,11 @@ c_best_subset_selection(swiss[,1], swiss[,2:6])
 
 ### 4.1)
 
+Let's import the data as well and have a look at it.
+
 ```{r}
-
 tecator_data = read_excel("./tecator.xlsx")
-
+head(tecator_data)
 ggplot(tecator_data, aes(x = Protein, y = Moisture)) +  geom_point() + geom_smooth()
 
 ## Do you think this data is described well by a linear model?
@@ -275,3 +335,14 @@ Ridge Regression has the problem, that even with high $\lambda's$ the coefficien
 
 $$ \lambda  \sum_{j} |\beta_{j}|$$
 Due to the fact that high $\lambda's$ can set the coefficients to zero, LASSO perform a *variable selection*. This is what can bee seen in the plot, with increasing $\ln(\lambda)$ more and more variables are set to 0.
+
+## 4.7
+```{r}
+lasso_vc = cv.glmnet(y = response_lasso, x = covariates_lasso, alpha = 1, lambda = seq(from = 0, to = 10, by = 0.01))
+print(lasso_vc$lambda.min)
+plot(lasso_vc)
+```
+
+We see that the best MSE is for $\lambda = l  i  m_{\lambda\to 0} = 0$, so we now that we are performing least squares estimate which includes **all** coefficients.
+
+## 4.8
