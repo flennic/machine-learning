@@ -48,108 +48,121 @@ spambase_model = glm(Spam ~ ., data = train, family = "binomial")
 spambase_predict_train = predict(object = spambase_model, newdata = train, type = "response")
 spambase_predict_train = apply(as.matrix(spambase_predict_train), c(1), FUN = function(x) return(x > 0.5))
 confusion_matrix_train = as.matrix(table(spambase_predict_train, train$Spam))
+colnames(confusion_matrix_train) = c("Spam", "Normal Mail")
+rownames(confusion_matrix_train) = c("Classified as Spam","Classified as no-Spam")
 
 ## Test
 spambase_predict_test = predict(object = spambase_model, newdata = test, type = "response")
 spambase_predict_test = apply(as.matrix(spambase_predict_test), c(1), FUN = function(x) return(x > 0.5))
 confusion_matrix_test = as.matrix(table(spambase_predict_test, test$Spam))
+colnames(confusion_matrix_test) = c("Spam", "Normal Mail")
+rownames(confusion_matrix_test) = c("Classified as Spam","Classified as no-Spam")
 ```
 
-
-Let's see what the confusion matrices look like. First one is for the training, second one is for the test data.
+Let's see what the confusion matrices look like for the Logistic Regression with 0.5 threshold. First one is for the training, second one is for the test data.
 
 ```{r, echo = FALSE}
 kable(confusion_matrix_train, caption = "Confusion Matrix (Training Data)")
-kable(confusion_matrix_test,  caption = "Confusion Matrix (Training Data)")
+kable(confusion_matrix_test,caption = "Confusion Matrix (Test Data)")
 ```
 
 Misclassification rate for the training data:
 
-```{r}
+```{r, echo = FALSE}
 spam_not_detected_train = confusion_matrix_train[2,1]/sum(confusion_matrix_train[,1])
 mail_missclassified_train = confusion_matrix_train[1,2]/sum(confusion_matrix_train[,2])
+
 print(paste(sep = "", "Spam not detected: ", spam_not_detected_train))
 print(paste(sep = "", "Mail missclassified as spam: ", mail_missclassified_train))
-print(paste(sep ="", "misclassification rate: ", (confusion_matrix_train[1,2]+confusion_matrix_train[2,1])/sum(confusion_matrix_train)))
+print(paste(sep ="", "Misclassification rate: ", (confusion_matrix_train[1,2]+confusion_matrix_train[2,1])/sum(confusion_matrix_train)))
 ```
 
-And not for the test data:
+And now for the test data:
 
-```{r}
+```{r, echo = FALSE}
 spam_not_detected_test = confusion_matrix_test[2,1]/sum(confusion_matrix_test[,1])
 mail_missclassified_test = confusion_matrix_test[1,2]/sum(confusion_matrix_test[,2])
 print(paste(sep = "", "Spam not detected: ", spam_not_detected_test))
 print(paste(sep = "", "Mail missclassified as spam: ", mail_missclassified_test))
-print(paste(sep ="", "misclassification rate: ", (confusion_matrix_test[1,2]+confusion_matrix_test[2,1])/sum(confusion_matrix_test)))
+print(paste(sep ="", "Misclassification rate: ", (confusion_matrix_test[1,2]+confusion_matrix_test[2,1])/sum(confusion_matrix_test)))
 ```
 
 ### 1.3)
 
-```{r}
-spambase_model_two = glm(as.formula("Spam ~ ."), data = train, family = "binomial")
+```{r, echo = FALSE, warning = FALSE}
+spambase_model_two = glm(Spam ~ ., data = train, family = "binomial")
 
 ## train_two
 spambase_predict_train_two = predict(object = spambase_model_two, newdata = train, type = "response")
 spambase_predict_train_two = apply(as.matrix(spambase_predict_train_two), c(1), FUN = function(x) return(x > 0.9))
 confusion_matrix_train_two = as.matrix(table(spambase_predict_train_two, train$Spam))
+colnames(confusion_matrix_train_two) = c("Spam", "Normal Mail")
+rownames(confusion_matrix_train_two) = c("Classified as Spam","Classified as no-Spam")
 
 ## test_two
 spambase_predict_test_two = predict(object = spambase_model_two, newdata = test, type = "response")
 spambase_predict_test_two = apply(as.matrix(spambase_predict_test_two), c(1), FUN = function(x) return(x > 0.9))
 confusion_matrix_test_two = as.matrix(table(spambase_predict_test_two, test$Spam))
-```
-Let's see what the confusion matrices look like. First one is for the train_twoing, second one is for the test_two data.
-
-```{r}
-print(confusion_matrix_train_two)
-print(confusion_matrix_test_two)
+colnames(confusion_matrix_test_two) = c("Spam", "Normal Mail")
+rownames(confusion_matrix_test_two) = c("Classified as Spam","Classified as no-Spam")
 ```
 
-misclassification rate for the training data:
+Let's see what the confusion matrices look like for the Logistic Regression with 0.9 Threshold. First one is for the training, second one is for the test data.
 
-```{r}
+```{r, echo = FALSE}
+kable(confusion_matrix_train_two, caption = "Confusion Matrix (Training Data)")
+kable(confusion_matrix_test_two, caption = "Confusion Matrix (Test Data)")
+```
+
+Misclassification rate for the training data:
+
+```{r, echo = FALSE}
 spam_not_detected_train_two = confusion_matrix_train_two[2,1]/sum(confusion_matrix_train_two[,1])
 mail_missclassified_train_two = confusion_matrix_train_two[1,2]/sum(confusion_matrix_train_two[,2])
 print(paste(sep = "", "Spam not detected: ", spam_not_detected_train_two))
 print(paste(sep = "", "Mail missclassified as spam: ", mail_missclassified_train_two))
-print(paste(sep ="", "misclassification rate: ", (confusion_matrix_train_two[1,2]+confusion_matrix_train_two[2,1])/sum(confusion_matrix_train_two)))
+print(paste(sep ="", "Misclassification rate: ", (confusion_matrix_train_two[1,2]+confusion_matrix_train_two[2,1])/sum(confusion_matrix_train_two)))
 ```
 
-And not for the test data:
+And now for the test data:
 
-```{r}
+```{r, echo = FALSE}
 spam_not_detected_test_two = confusion_matrix_test_two[2,1]/sum(confusion_matrix_test_two[,1])
 mail_missclassified_test_two = confusion_matrix_test_two[1,2]/sum(confusion_matrix_test_two[,2])
 print(paste(sep = "", "Spam not detected: ", spam_not_detected_test_two))
 print(paste(sep = "", "Mail missclassified as spam: ", mail_missclassified_test_two))
-print(paste(sep ="", "misclassification rate: ", (confusion_matrix_test_two[1,2]+confusion_matrix_test_two[2,1])/sum(confusion_matrix_test_two)))
+print(paste(sep ="", "Misclassification rate: ", (confusion_matrix_test_two[1,2]+confusion_matrix_test_two[2,1])/sum(confusion_matrix_test_two)))
 ```
 
 ### 1.4)
 
-Train the model and apply it on the training and test data.
+Train the model with K = 30 and apply it on the training and test data using kknn.
 
-```{r}
-kknn_model_train = kknn(formula = as.formula("Spam ~ ."), train = train, test = train, k = 30)
-kknn_model_test = kknn(formula = as.formula("Spam ~ ."), train = train, test = test, k = 30)
+```{r, echo = FALSE}
+kknn_model_train = kknn(formula = Spam ~ ., train = train, test = train, k = 30)
+kknn_model_test = kknn(formula = Spam ~ ., train = train, test = test, k = 30)
 
 # Train
 y_hat_train = apply(as.matrix(kknn_model_train$fitted.values), c(1), FUN = function(x) return(x > 0.5))
 confusion_matrix_kkn_train = as.matrix(table(y_hat_train, train$Spam))
+colnames(confusion_matrix_kkn_train) = c("Spam", "Normal Mail")
+rownames(confusion_matrix_kkn_train) = c("Classified as Spam","Classified as no-Spam")
 
 # Test
 y_hat_test = apply(as.matrix(kknn_model_test$fitted.values), c(1), FUN = function(x) return(x > 0.5))
 confusion_matrix_kkn_test = as.matrix(table(y_hat_test, test$Spam))
+colnames(confusion_matrix_kkn_test) = c("Spam", "Normal Mail")
+rownames(confusion_matrix_kkn_test) = c("Classified as Spam","Classified as no-Spam")
 ```
 
 Confusion matrices:
-```{r}
-print(confusion_matrix_kkn_train)
-print(confusion_matrix_kkn_test)
+```{r, echo = FALSE}
+kable(confusion_matrix_kkn_train, caption = "Confusion Matrix (Test Data)")
+kable(confusion_matrix_kkn_test, caption = "Confusion Matrix (Test Data)")
 ```
 
 Result training:
-```{r}
+```{r, echo = FALSE}
 spam_not_detected_train_kknn = confusion_matrix_kkn_train[2,1]/sum(confusion_matrix_kkn_train[,1])
 mail_missclassified_train_kknn = confusion_matrix_kkn_train[1,2]/sum(confusion_matrix_kkn_train[,2])
 print(paste(sep = "", "Spam not detected: ", spam_not_detected_train_kknn))
@@ -158,7 +171,7 @@ print(paste(sep ="", "Misclassification rate: ", (confusion_matrix_kkn_train[1,2
 ```
 
 Result test:
-```{r, include=FALSE} 
+```{r, echo = FALSE} 
 spam_not_detected_test_kknn = confusion_matrix_kkn_test[2,1]/sum(confusion_matrix_kkn_test[,1])
 mail_missclassified_test_kknn = confusion_matrix_kkn_test[1,2]/sum(confusion_matrix_kkn_test[,2])
 print(paste(sep = "", "Spam not detected: ", spam_not_detected_test_kknn))
@@ -169,43 +182,47 @@ print(paste(sep ="", "Misclassification rate: ", (confusion_matrix_kkn_test[1,2]
 The misclassification rate for kknn is higher then the logistic regression one.
 
 ## 1.5)
-Train the model and apply it on the training and test data.
+Train the model with K = 1 and apply it on the training and test data using kknn.
 
-```{r}
-kknn_model_train_30 = kknn(formula = as.formula("Spam ~ ."), train = train, test = train, k = 1)
-kknn_model_test_30 = kknn(formula = as.formula("Spam ~ ."), train = train, test = test, k = 1)
+```{r, echo = FALSE}
+kknn_model_train_1 = kknn(formula = Spam ~ ., train = train, test = train, k = 1)
+kknn_model_test_1 = kknn(formula = Spam ~ ., train = train, test = test, k = 1)
 
 # Train
-y_hat_train_30 = apply(as.matrix(kknn_model_train_30$fitted.values), c(1), FUN = function(x) return(x > 0.5))
-confusion_matrix_kkn_train_30 = as.matrix(table(y_hat_train_30, train$Spam))
+y_hat_train_1 = apply(as.matrix(kknn_model_train_1$fitted.values), c(1), FUN = function(x) return(x > 0.5))
+confusion_matrix_kkn_train_1 = as.matrix(table(y_hat_train_1, train$Spam))
+colnames(confusion_matrix_kkn_train_1) = c("Spam", "Normal Mail")
+rownames(confusion_matrix_kkn_train_1) = c("Classified as Spam","Classified as no-Spam")
 
 # Test
-y_hat_test_30 = apply(as.matrix(kknn_model_test_30$fitted.values), c(1), FUN = function(x) return(x > 0.5))
-confusion_matrix_kkn_test_30 = as.matrix(table(y_hat_test_30, test$Spam))
+y_hat_test_1 = apply(as.matrix(kknn_model_test_1$fitted.values), c(1), FUN = function(x) return(x > 0.5))
+confusion_matrix_kkn_test_1 = as.matrix(table(y_hat_test_1, test$Spam))
+colnames(confusion_matrix_kkn_test_1) = c("Spam", "Normal Mail")
+rownames(confusion_matrix_kkn_test_1) = c("Classified as Spam","Classified as no-Spam")
 ```
 
 Confusion matrices:
-```{r}
-print(confusion_matrix_kkn_train_30)
-print(confusion_matrix_kkn_test_30)
+```{r, echo = FALSE}
+kable(confusion_matrix_kkn_train_1, caption = "Confusion Matrix (Test Data)")
+kable(confusion_matrix_kkn_test_1, caption = "Confusion Matrix (Test Data)")
 ```
 
 Result training:
-```{r}
-spam_not_detected_train_kknn_30 = confusion_matrix_kkn_train_30[2,1]/sum(confusion_matrix_kkn_train_30[,1])
-mail_missclassified_train_kknn_30 = confusion_matrix_kkn_train_30[1,2]/sum(confusion_matrix_kkn_train_30[,2])
-print(paste(sep = "", "Spam not detected: ", spam_not_detected_train_kknn_30))
-print(paste(sep = "", "Mail missclassified as spam: ", mail_missclassified_train_kknn_30))
-print(paste(sep ="", "Misclassification rate: ", (confusion_matrix_kkn_train_30[1,2]+confusion_matrix_kkn_train_30[2,1])/sum(confusion_matrix_kkn_train_30)))
+```{r, echo = FALSE}
+spam_not_detected_train_kknn_1 = confusion_matrix_kkn_train_1[2,1]/sum(confusion_matrix_kkn_train_1[,1])
+mail_missclassified_train_kknn_1 = confusion_matrix_kkn_train_1[1,2]/sum(confusion_matrix_kkn_train_1[,2])
+print(paste(sep = "", "Spam not detected: ", spam_not_detected_train_kknn_1))
+print(paste(sep = "", "Mail missclassified as spam: ", mail_missclassified_train_kknn_1))
+print(paste(sep ="", "Misclassification rate: ", (confusion_matrix_kkn_train_1[1,2]+confusion_matrix_kkn_train_1[2,1])/sum(confusion_matrix_kkn_train_1)))
 ```
 
 Result test:
-```{r}
-spam_not_detected_test_kknn_30 = confusion_matrix_kkn_test_30[2,1]/sum(confusion_matrix_kkn_test_30[,1])
-mail_missclassified_test_kknn_30 = confusion_matrix_kkn_test_30[1,2]/sum(confusion_matrix_kkn_test_30[,2])
-print(paste(sep = "", "Spam not detected: ", spam_not_detected_test_kknn_30))
-print(paste(sep = "", "Mail missclassified as spam: ", mail_missclassified_test_kknn_30))
-print(paste(sep ="", "Misclassification rate: ", (confusion_matrix_kkn_test_30[1,2]+confusion_matrix_kkn_test_30[2,1])/sum(confusion_matrix_kkn_test_30)))
+```{r, echo = FALSE}
+spam_not_detected_test_kknn_1 = confusion_matrix_kkn_test_1[2,1]/sum(confusion_matrix_kkn_test_1[,1])
+mail_missclassified_test_kknn_1 = confusion_matrix_kkn_test_1[1,2]/sum(confusion_matrix_kkn_test_1[,2])
+print(paste(sep = "", "Spam not detected: ", spam_not_detected_test_kknn_1))
+print(paste(sep = "", "Mail missclassified as spam: ", mail_missclassified_test_kknn_1))
+print(paste(sep ="", "Misclassification rate: ", (confusion_matrix_kkn_test_1[1,2]+confusion_matrix_kkn_test_1[2,1])/sum(confusion_matrix_kkn_test_1)))
 ```
 
 The misclassification rate for kknn is higher then the logistic regression one.
@@ -391,13 +408,6 @@ We iterate n times, create our model, and save the SSE. Then we use the model fo
 
 ```{r}
 for (i in c(1:n)) {
-  #Y_train = as.matrix(tecator_data_training[,1])
-  #X_train = as.matrix(tecator_data_training[,2:(1+i)])
-   
-  #X_valid = as.matrix(tecator_data_validation[,1])
-  #Y_valid = as.matrix(tecator_data_validation[,2:(1+i)]) 
-  # t(X_train) %*% X_train)
-  #betas = as.matrix((solve(t(X_train) %*% X_train)) %*% t(X_train) %*% Y_train)
   
   formula = "Y ~ Protein1"
   
@@ -478,3 +488,6 @@ plot(lasso_vc)
 We see that the best MSE is for $\lambda = l  i  m_{\lambda\to 0} = 0$, so we now that we are performing least squares estimate which includes **all** coefficients.
 
 ## 4.8
+
+```{r, ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
+```
