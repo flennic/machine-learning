@@ -27,7 +27,7 @@ Let's import the data and have a look at it.
 ```{r, echo=FALSE}
 #### Assigment 1.1 ####
 spambase = read_excel("./spambase.xlsx")
-kable(head(spambase[,1:10]))
+kable(head(spambase[,1:10]), caption = "spambase.xlsx")
 ```
 
 We split the data in 50% training and 50% testing.
@@ -443,7 +443,7 @@ c_best_subset_selection = function(Y, X) {
 Let's have a look at the results:
 
 ```{r, echo = FALSE}
-kable(c_best_subset_selection(swiss[,1], swiss[,2:6]))
+kable(c_best_subset_selection(swiss[,1], swiss[,2:6]), caption = "Best Feature Selection")
 ```
 
 We can see that the range of the score improves with an increasing number of features until a certain threshold, which makes sense as the features give more information but as soon as you select to many features which are unrelated to the predicted value, they a noise and decrease the score again. So in this case we find the optimum with 4 features, as seen in teh plot and the table. The feature that is not selected, is the second one, V4. 
@@ -457,7 +457,7 @@ Let's import the data as well and have a look at it.
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
 #### Assigment 4.1 ####
 tecator_data = read_excel("./tecator.xlsx")
-kable(head(tecator_data[,1:10]))
+kable(head(tecator_data[,1:10]), caption = "tecator.xlsx")
 ggplot(tecator_data, aes(x = Protein, y = Moisture)) +
   geom_point() + geom_smooth()
 
@@ -532,7 +532,7 @@ for (i in c(1:n)) {
   results = rbind(results, list(i, mse_training, mse_validation))
 }
 names(results) = list("Iteration", "MSE_Training", "MSE_Validation")
-kable(results)
+kable(results, caption = "MSE of Training and Validation")
 ```
 
 ```{r, echo = FALSE, message = FALSE}
