@@ -56,29 +56,21 @@ density_estimation = function(data, K = 6, X) {
   V = max(knearest) - min(knearest)
   
   return(K/(N*V))
-  
-  #D = X %*% t(X)
-  
-  #D = matrix(0, ncol = length(X), nrow = 0)
-  
-  #for (i in 1:length(X)) {
-  #  current_distances = c()
-  #  for (j in 1:length(X)) {
-  #    current_distances = cbind(current_distances, abs(X[i] - X[j]))
-  #  }
-  #  D = rbind(D, current_distances)
-  #}
-  
-  #dataSorted = sort(data$speed, index.return = TRUE)
-  
-  #densities = c()
-  
-  #for (i in 1:length(X)) {
-    
-  #}
-  
-  
 }
 
-a = density_estimation(cars$speed, K = 6, X = 3)
-print(a)
+min_speed = min(cars$speed)
+max_speed = max(cars$speed)
+steps = 1000
+
+x_values = seq(min_speed, max_speed, by = (max_speed - min_speed)/steps)
+y_values = unlist(lapply(x_values, function(x) density_estimation(cars$speed, K = 5, x)))
+
+density_data_frame = data.frame(x_values, y_values)
+colnames(density_data_frame) = c("X", "Density")
+
+#print(ggplot(density_data_frame, aes(x = X, y = Density)) + geom_line())
+
+print(ggplot(density_data_frame) +
+  geom_line(aes(x = X, y = Density, colour = "Density Function")) +
+  labs(title="Density of cars$speed", y="Density", x="X", color = "Legend") +
+  scale_color_manual(values = c("orange")))
