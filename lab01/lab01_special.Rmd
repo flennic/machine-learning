@@ -20,8 +20,8 @@ set.seed(12345)
 
 ## Special Task 1
 
-## a)
-This section includes the function with the k-nearest-neighbour implementation
+### a)
+This section includes the function with the k-nearest-neighbour implementation.
 
 ```{r}
 knearest = function(data, K = 5, newdata) {
@@ -64,7 +64,7 @@ knearest = function(data, K = 5, newdata) {
   # Look how many got classified correctly
   classifiedCorrectly = sum(classification == newdata$Spam)
   
-  # Take 1 - correctly to get the missclassificationr ate
+  # Take "1 -" to get the missclassification rate
   missclassificationRate = 1 - (classifiedCorrectly/nrow(newdata))
   
   return(missclassificationRate)
@@ -72,7 +72,6 @@ knearest = function(data, K = 5, newdata) {
 ```
 
 ### b)
-
 ```{r}
 # Read the datastet and split it into 50% training and 50% test
 spambase = read_excel("spambase.xlsx")
@@ -80,14 +79,18 @@ c_data = spambase[1:(nrow(spambase)/2),]
 c_newdata = spambase[((nrow(spambase)/2)+1):nrow(spambase),]
 
 # Get the missqualification rates for training and  test
-dm = knearest(c_data, K = 30, c_data)
-dm2 = knearest(c_data, K = 30, c_newdata)
+training_rate = knearest(c_data, K = 30, c_data)
+test_rate = knearest(c_data, K = 30, c_newdata)
 
 # Print the results
-print(dm)
-print(dm2)
+print(training_rate)
+print(test_rate)
 ```
 
+
+In 1.4) the misclassification rate for the training data set is 17.226% and for the test data set it's 32.993%.
+
+We can see that the custom implementation based on the cosine similarity performs better on the training data compared the the R implemented function. The gap closes when we compare the classification rates on the test dataset, the custom implementation is a little bit worse. This gives the impression, that the custom implementation based on the cosine similarity slightly overfits compared to 1.4.
 
 ## Special Task 2
 ```{r}
@@ -99,7 +102,7 @@ density_estimation = function(data, K = 6, X) {
   # V needs to be calculated, first get all distances
   distances = abs(X - S)
   
-  # Sort them the get the K nearest and get their indexed
+  # Sort them the get the K nearest and get their indexes
   sorted_distances = sort(distances, index.return = TRUE)
   idx_knearest = sorted_distances$ix[1:K]
   
@@ -119,10 +122,11 @@ max_speed = max(cars$speed)
 steps = 1000
 
 # X-Values are a sequence from min_speed to max_speed
-x_values = seq(min_speed, max_speed, by = (max_speed - min_speed)/steps)
+x_values =   seq(min_speed, max_speed, by = (max_speed - min_speed)/steps)
 
 # Y-Values are the density estimation at each point
-y_values = unlist(lapply(x_values, function(x) density_estimation(cars$speed, K = 6, x)))
+y_values = unlist(lapply(x_values,
+                         function(x) density_estimation(cars$speed, K = 6, x)))
 
 # Put them into a dataframe
 density_data_frame = data.frame(x_values, y_values)
@@ -130,7 +134,10 @@ colnames(density_data_frame) = c("X", "Density")
 
 # Plot the data
 print(ggplot(density_data_frame) +
+  geom_histogram(data = cars, bins = 21) + aes(x = speed, y = ..density..) + 
   geom_line(aes(x = X, y = Density, colour = "Density Function")) +
   labs(title="Density of cars$speed", y="Density", x="X", color = "Legend") +
   scale_color_manual(values = c("orange")))
+
+print(hist(cars$speed), breaks = 10)
 ```
