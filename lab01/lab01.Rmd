@@ -1,6 +1,6 @@
 ---
 title: "Machine Learning Lab 01"
-author: "Maximilian Pfundstein"
+author: "Maximilian Pfundstein (maxpf364)"
 date: "11/16/2018"
 output:
   html_document:

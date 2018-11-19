@@ -1,6 +1,7 @@
 # Special Task 1 
 set.seed(12345)
 library(readxl)
+library(ggplot2)
 spambase = read_excel("spambase.xlsx")
 
 knearest = function(data, K = 5, newdata) {
@@ -52,8 +53,9 @@ density_estimation = function(data, K = 6, X) {
   # V needs to be calculated
   distances = abs(X - S)
   sorted_distances = sort(distances, index.return = TRUE)
-  knearest = sorted_distances$x[1:K]
-  V = max(knearest) - min(knearest)
+  idx_knearest = sorted_distances$ix[1:K]
+  V = max(data[idx_knearest]) - min(data[idx_knearest])
+  #V = abs(data[idx_knearest[K]] - data[idx_knearest[1]])
   
   return(K/(N*V))
 }
@@ -63,7 +65,7 @@ max_speed = max(cars$speed)
 steps = 1000
 
 x_values = seq(min_speed, max_speed, by = (max_speed - min_speed)/steps)
-y_values = unlist(lapply(x_values, function(x) density_estimation(cars$speed, K = 5, x)))
+y_values = unlist(lapply(x_values, function(x) density_estimation(cars$speed, K = 6, x)))
 
 density_data_frame = data.frame(x_values, y_values)
 colnames(density_data_frame) = c("X", "Density")
