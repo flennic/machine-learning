@@ -3,12 +3,12 @@ title: "Machine Learning Lab 01 (Special)"
 author: "Maximilian Pfundstein (maxpf364)"
 date: "11/16/2018"
 output:
-  pdf_document:
-    toc: true
-    toc_depth: 3
   html_document:
     df_print: paged
     toc_float: true
+  pdf_document:
+    toc: true
+    toc_depth: 3
 ---
 
 ```{r setup, include=FALSE}
@@ -132,7 +132,8 @@ density_estimation = function(data, K = 6, X) {
   
   # The the difference between the highest ans lowest one
   # (to get the volume/distance)
-  V = max(data[idx_knearest]) - min(data[idx_knearest])
+  #V = max(data[idx_knearest]) - min(data[idx_knearest])
+  V = 2 * max(abs(data[idx_knearest[K]] - X))
   
   # Returns based on formula from slides
   return(K/(N*V))
