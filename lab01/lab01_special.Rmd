@@ -4,12 +4,12 @@ author: "Maximilian Pfundstein (maxpf364)"
 date: "24 November 2018"
 bibliography: sources.bib
 output:
-  pdf_document:
-    toc: true
-    toc_depth: 3
   html_document:
     df_print: paged
     toc_float: true
+  pdf_document:
+    toc: true
+    toc_depth: 3
 ---
 
 ```{r setup, include=FALSE}
