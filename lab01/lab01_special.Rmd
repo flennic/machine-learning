@@ -1,14 +1,15 @@
 ---
 title: "Machine Learning Lab 01 (Special)"
 author: "Maximilian Pfundstein (maxpf364)"
-date: "11/16/2018"
+date: "24 November 2018"
+bibliography: sources.bib
 output:
-  html_document:
-    df_print: paged
-    toc_float: true
   pdf_document:
     toc: true
     toc_depth: 3
+  html_document:
+    df_print: paged
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
@@ -21,12 +22,14 @@ set.seed(12345)
 
 ## Special Task 1
 
-### a)
+### a) Implementation
 This section includes the function with the k-nearest-neighbour implementation.
 
 ```{r}
+
 knearest = function(data, K = 5, newdata) {
   
+  # Internal Function to calculate D
   d = function(X, Y) {
     
     # Make sure the input in the matrix format
@@ -58,14 +61,15 @@ knearest = function(data, K = 5, newdata) {
     indexesKnn = sortedRow$ix[1:K]
     
     # Lookup if they're classified as 0 or 1
-    classificationRates = newdata$Spam[indexesKnn]
+    classificationRates = data$Spam[indexesKnn]
     
     # Add the classification
     classificationRate = c(classificationRate,
-                           (sum(newdata$Spam[indexesKnn] / K)))
-    temp_classification = sum(newdata$Spam[indexesKnn]) > (K/2)
+                           (sum(data$Spam[indexesKnn] / K)))
+    temp_classification = sum(data$Spam[indexesKnn]) > (K/2)
     classification = c(classification, temp_classification)
-    classifiedCorrectly = c(classifiedCorrectly, temp_classification == as.logical(data$Spam[i]))
+    classifiedCorrectly =
+      c(classifiedCorrectly, temp_classification != as.logical(newdata$Spam[i]))
   }
   
   returnDataFrame = cbind(newdata, classificationRate)
@@ -73,25 +77,33 @@ knearest = function(data, K = 5, newdata) {
   returnDataFrame = cbind(returnDataFrame, classifiedCorrectly)
   
   return(returnDataFrame)
+  
 }
 ```
 
-### b)
+### b) Classification
 ```{r, echo = FALSE}
-# Read the datastet and split it into 50% training and 50% test
+
+# Set seed and import data from excel
+set.seed(12345)
 spambase = read_excel("spambase.xlsx")
-c_data = spambase[1:(nrow(spambase)/2),]
-c_newdata = spambase[((nrow(spambase)/2)+1):nrow(spambase),]
+
+# Shuffle the data
+n = dim(spambase)[1]
+id = sample(1:n, floor(n*0.5))
+c_data = spambase[id,]
+c_newdata = spambase[-id,]
 
 # Get the missqualification rates for training and  test
 training_classification = knearest(c_data, K = 30, c_data)
 test_classification = knearest(c_data, K = 30, c_newdata)
 
 # Get the classification rate
-training_rate = 1 - sum(training_classification$classifiedCorrectly/
+training_rate = sum(training_classification$classifiedCorrectly/
   nrow(training_classification))
-test_rate = 1 - sum(test_classification$classifiedCorrectly/
+test_rate = sum(test_classification$classifiedCorrectly/
   nrow(test_classification))
+
 ```
 
 In the following the misqualification rates for training and test are shown. The function adds three columns to the data.frame, *classificationRate*, *classification* and *classifiedCorrectly*:
@@ -100,13 +112,23 @@ In the following the misqualification rates for training and test are shown. The
 - *classification*: Simply checks if $classificationRate > 0.5$ to show the classification.
 - *classifiedCorrectly*: Compares the original y and predicted y and tells, if it got classified correctly.
 
+Misqualification rate for the training data:
 
-```{r}
-# Print the results
-kable(head(training_classification[,49:52]))
+```{r, echo = FALSE}
+
 print(training_rate)
-kable(head(test_classification[,49:52]))
+kable(head(training_classification[,49:52]), caption = "Head of Training Classification")
+
+```
+
+
+Misqualification rate for the test data:
+
+```{r, echo = FALSE}
+
 print(test_rate)
+kable(head(test_classification[,49:52]), caption = "Head of Test Classification")
+
 ```
 
 
@@ -117,7 +139,9 @@ We can see that the custom implementation based on the cosine similarity perform
 ## Special Task 2
 
 This is the function for the density estimation at point X, K and a given dataset (vector).
+
 ```{r}
+
 density_estimation = function(data, K = 6, X) {
   
   N = length(data)
@@ -130,21 +154,47 @@ density_estimation = function(data, K = 6, X) {
   sorted_distances = sort(distances, index.return = TRUE)
   idx_knearest = sorted_distances$ix[1:K]
   
-  # The the difference between the highest ans lowest one
-  # (to get the volume/distance)
-  #V = max(data[idx_knearest]) - min(data[idx_knearest])
+  # We take the point which is furthest away and take it as the "radius" to get
+  # the V (linear)
   V = 2 * max(abs(data[idx_knearest[K]] - X))
   
   # Returns based on formula from slides
   return(K/(N*V))
 }
+
 ```
 
-Shown is the requested plot, the yellow line shows the density estimation function with 1000 points between min and max of cars$speed. In addition to that the histogram is shown. The number of bins is selected based on aligning to the density function. As the maximum resultion of the speed vector are whole numbers, adding a much higher number of bins doesn't add a lot of more information.
+Shown is the requested plot, the yellow line shows the density estimation function with 1000 points between min and max of ```cars$speed```. In addition to that the histogram is shown.
 
-It can be seen, that the estimated density function has some errors in density, but is correlated to the histogram. On average the density is higher (>1 in total which is possible as it is just an esimation and not a real density function). We observe that "peaks" as a density of 0 is not correctly estimated as well as peaks, where the estimated density is much higher.
+**Important Note:** The density estimation itself is straight forward as it basically is just the calculation of $K/(N*V)$. However the correct calculation of V is not that clear. The slides ```Lecture 1a.pdf``` state that $\Delta$ is the "length of the interval containing K neighbors". This statement is correct, but doesn't describe unambiguously the correct calculation. The following questions are left unanswered:
+
+- Does it have to be the *minimal* length that barely captures all K neighbours?
+- If not, how is it aligned? Means, is it aligned to the closest or furthest neighbor and on which site is it aligned, left or right?
+- Is it the distance from the furthest to the closest neighbor?
+
+Therefore I looked this topic up in [@pattern-recognition] chapter *2.5.2 Nearest-neighbour methods*. There it says:
+
+> We therefore return to our general result (2.246) for local density estimation,
+> and instead of fixing V and determining the value of K from the data, we consider
+> a fixed value of K and use the data to find an appropriate value for V. To do this,
+> we consider a small sphere centred on the point x at which we wish to estimate the
+> density p(x), and we allow the radius of the sphere to grow until it contains precisely
+> K data points. The estimate of the density p(x) is then given by (2.246) with V set to
+> the volume of the resulting sphere. This technique is known asK nearest neighbours
+> and is illustrated in Figure 2.26, for various choices of the parameter K, using the
+> same data set as used in Figure 2.24 and Figure 2.25. We see that the value of K
+> now governs the degree of smoothing and that again there is an optimum choice for
+> K that is neither too large nor too small. Note that the model produced by K nearest
+> 2.61 neighbours is not a true density model because the integral over all space diverges.
+
+If we project the sphere into one dimensional space we have a line. The length of the line is the radius times two, as is goes into both directions. The radius is the smallest radius that captures K neighbors. So we take the neighbor, that is farthest away and double the distance to get $\Delta$. This statement matches the statements made on the slides following the above mentioned one. It also states, that this model is **not** a true density model.
+
+Adding this makes the density function more curvy and not that straight as seen on the slides.  **End of Note.**
+
+It can be seen, that the estimated density function has some errors in density, but is correlated to the histogram. The sum of density is higher than allowed for a desnity function (>1 in total which is possible as it is just an esimation and not a real density function). 
 
 ```{r, echo = FALSE}
+
 # Get the min and max from the dataset and define a stepsize
 min_speed = min(cars$speed)
 max_speed = max(cars$speed)
@@ -167,4 +217,12 @@ print(ggplot(density_data_frame) +
   geom_line(aes(x = X, y = Density, colour = "Density Function")) +
   labs(title="Density of cars$speed", y="Density", x="X", color = "Legend") +
   scale_color_manual(values = c("orange")))
+
 ```
+
+# Appendix
+
+```{r, ref.label = knitr::all_labels(), echo = TRUE, eval = FALSE}
+```
+
+# Bibliography
