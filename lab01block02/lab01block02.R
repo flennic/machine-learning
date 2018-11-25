@@ -44,13 +44,6 @@ for (i in tree_sizes) {
 
 print(rf_errors)
 
-ggplot(rf_errors) +
-  geom_line(aes(x = n, y = error_rate_training, colour = "Training")) +
-  geom_line(aes(x = n, y = error_rate_validation, colour = "Validation")) +
-  labs(title="Random Forest", y="Error Rate", x="Number of Forests", color = "Legend") +
-  scale_color_manual(values = c("blue", "orange"))
-
-
 # AdaBoost
 adb_errors = data.frame(n = numeric(), error_rate_training = numeric(),
                        error_rate_validation = numeric())
@@ -77,7 +70,13 @@ for (i in tree_sizes) {
 print(adb_errors)
 
 ggplot(adb_errors) +
-  geom_line(aes(x = n, y = error_rate_training, colour = "Training")) +
-  geom_line(aes(x = n, y = error_rate_validation, colour = "Validation")) +
-  labs(title="AdaBoost", y="Error Rate", x="Number of Forests", color = "Legend") +
-  scale_color_manual(values = c("blue", "orange"))
+  geom_line(aes(x = n, y = error_rate_training, colour = "AdaBoost Training"), linetype = "dashed") +
+  geom_point(aes(x = n, y = error_rate_training), colour = "red") +
+  geom_line(aes(x = n, y = error_rate_validation, colour = "AdaBoost Validation")) +
+  geom_point(aes(x = n, y = error_rate_validation), colour = "orange") +
+  geom_line(aes(x = n, y = error_rate_training, colour = "Random Forest Training"), data = rf_errors, linetype = "dashed") +
+  geom_point(aes(x = n, y = error_rate_training), colour = "blue", data = rf_errors) +
+  geom_line(aes(x = n, y = error_rate_validation, colour = "Random Forest Validation"), data = rf_errors) +
+  geom_point(aes(x = n, y = error_rate_validation), colour = "steelblue2", data = rf_errors) +
+  labs(title = "Random Forest and AdaBoost", y = "Error Rate", x = "Number of Forests", color = "Legend") +
+  scale_color_manual(values = c("red", "orange", "blue", "steelblue2"))
