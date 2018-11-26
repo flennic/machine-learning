@@ -69,6 +69,16 @@ pbern = function(x, p) {
   return(p * (1-p)^(1-x))
 }
 
+bernoulli = function(X_f, mu_f) {
+  
+  bernulli_product = 1
+  
+  for (i in 1:length(mu_f)) {
+    bernulli_product = bernulli_product * pbern(X_f[i], mu_f[i])
+  }
+  return(bernulli_product)
+}
+
 initialize_gamma = function(x, mu, pi) {
   
   l_x = x
@@ -80,11 +90,7 @@ initialize_gamma = function(x, mu, pi) {
     X = x[n,]
     
     ##### Nominator
-    bernoulli_x_given_mu = 1
-    
-    for (i in 1:ncol(l_mu)) {
-      bernoulli_x_given_mu = bernoulli_x_given_mu * pbern(X[i], mu[k, i])
-    }
+    bernoulli_x_given_mu = bernoulli(X_f = X, mu_f = l_mu[k,])
     
     p_given_x_nom = pi[k] * bernoulli_x_given_mu
     
@@ -92,14 +98,9 @@ initialize_gamma = function(x, mu, pi) {
     denominator_sum = 0
     
     for (j in 1:nrow(l_mu)) {
+      
       ## First Bernoulli
-      
-      bernoulli_x_given_mu_denom = 1
-      
-      for (l in 1:ncol(l_mu)) {
-        bernoulli_x_given_mu_denom = bernoulli_x_given_mu_denom * pbern(X[l], mu[j, l])
-      }
-      
+      bernoulli_x_given_mu_denom = bernoulli(X_f = X, mu_f = l_mu[j,])
       p_given_x_denom = pi[j] * bernoulli_x_given_mu_denom
       denominator_sum = denominator_sum + p_given_x_denom
     }
@@ -109,6 +110,7 @@ initialize_gamma = function(x, mu, pi) {
    
   return(gamma)
 }
+
 
 
 gamma_calc = initialize_gamma(x, mu, pi)
@@ -136,6 +138,20 @@ for(it in 1:max_it) {
   # Stop if the lok likelihood has not changed significantly
   # Your code here
   
+  sum = 0
+  
+  for (i in 1:N) {
+    k_sum = 0
+    for (l_k in 1:K) {
+      current_val = pi[k] * bernoulli(X_f = x[i,], mu_f = mu[l_k,])
+      k_sum = k_sum + current_val
+    }
+    
+    ln_sum = log(k_sum)
+    sum = sum + ln_sum
+  }
+  
+  a = 5
   #M-step: ML parameter estimation from the data and fractional component assignments
   # Your code here
   
