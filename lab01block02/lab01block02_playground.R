@@ -113,7 +113,9 @@ initialize_gamma = function(x, mu, pi) {
 
 
 
+
 gamma_calc = initialize_gamma(x, mu, pi)
+old_likelihood = -Inf
 
 for(it in 1:max_it) {
   plot(mu[1,], type="o", col="blue", ylim=c(0,1))
@@ -133,12 +135,7 @@ for(it in 1:max_it) {
   #Log likelihood computation.
   # Your code here
   
-  cat("iteration: ", it, "log likelihood: ", llik[it], "\n")
-  flush.console()
-  # Stop if the lok likelihood has not changed significantly
-  # Your code here
-  
-  sum = 0
+  current_likelihood = 0
   
   for (i in 1:N) {
     k_sum = 0
@@ -148,13 +145,56 @@ for(it in 1:max_it) {
     }
     
     ln_sum = log(k_sum)
-    sum = sum + ln_sum
+    current_likelihood = current_likelihood + ln_sum
   }
+
   
-  a = 5
-  #M-step: ML parameter estimation from the data and fractional component assignments
+  
+  cat("iteration: ", it, "log likelihood: ", llik[it], "\n")
+  flush.console()
+  # Stop if the lok likelihood has not changed significantly
   # Your code here
   
+  if (abs(old_likelihood-current_likelihood) < min_change) break
+  
+  old_likelihood <<- current_likelihood
+ 
+  #M-step: ML parameter estimation from the data and fractional component assignments
+  # Your code here
+  ### mu new
+  for (l_k in 1:K) {
+    for (d in 1:D) {
+      
+      sum_nominator = 0
+      sum_denominator = 0
+      
+      for (l_n in 1:N) {
+        ## Nominator
+        sum_nominator = sum_nominator + z[l_n, l_k] * x[l_n, d]
+        
+        
+        
+        ## Denominator
+        sum_denominator = sum_denominator + z[l_n, l_k]
+        
+      }
+      
+      mu[l_k, d] = sum_nominator / sum_denominator
+    }
+  }
+  
+  ### pi new
+  for (k_l in 1:K) {
+    
+    pi_new_sum = 0
+    
+    ## Nominator
+    for (n_l in 1:N) {
+      pi_new_sum = pi_new_sum + z[n_l, k_l]
+    }
+    ## Denominator (is just N)
+    pi[k_l] = pi_new_sum / N
+  }
 }
 
 pi
