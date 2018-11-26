@@ -2,7 +2,7 @@
 set.seed(1234567890)
 
 # max number of EM iterations
-max_it = 1
+max_it = 100
 
 # min change in log likelihood between two consecutive EM iterations
 min_change = 0.1 
@@ -66,7 +66,7 @@ pi
 mu
 
 pbern = function(x, p) {
-  return(p * (1-p)^(1-x))
+  return(p^x * (1-p)^(1-x))
 }
 
 bernoulli = function(X_f, mu_f) {
@@ -79,42 +79,6 @@ bernoulli = function(X_f, mu_f) {
   return(bernulli_product)
 }
 
-initialize_gamma = function(x, mu, pi) {
-  
-  l_x = x
-  l_mu = mu
-  l_pi = pi
-  
-  gamma = function(n, k) {
-    
-    X = x[n,]
-    
-    ##### Nominator
-    bernoulli_x_given_mu = bernoulli(X_f = X, mu_f = l_mu[k,])
-    
-    p_given_x_nom = pi[k] * bernoulli_x_given_mu
-    
-    ##### Denominator
-    denominator_sum = 0
-    
-    for (j in 1:nrow(l_mu)) {
-      
-      ## First Bernoulli
-      bernoulli_x_given_mu_denom = bernoulli(X_f = X, mu_f = l_mu[j,])
-      p_given_x_denom = pi[j] * bernoulli_x_given_mu_denom
-      denominator_sum = denominator_sum + p_given_x_denom
-    }
-    
-    return(p_given_x_nom/denominator_sum)
-  }
-   
-  return(gamma)
-}
-
-
-
-
-gamma_calc = initialize_gamma(x, mu, pi)
 old_likelihood = -Inf
 
 for(it in 1:max_it) {
@@ -122,13 +86,46 @@ for(it in 1:max_it) {
   points(mu[2,], type="o", col="red")
   points(mu[3,], type="o", col="green")
   #points(mu[4,], type="o", col="yellow")
-  Sys.sleep(0.5)
+  #Sys.sleep(0.5)
   # E-step: Computation of the fractional component assignments
   # The E-step estimates the probability of each point belonging to each cluster
   # Your code here
+  
+  gamma = function(n, k) {
+    
+    ## Nominator
+    nominator = pi[k] * bernoulli(x[n,], mu[k,])
+    
+    ## Denominator
+    denominator = 0
+    for (l_k in 1:K) {
+      denominator = denominator + pi[l_k] * bernoulli(x[n,], mu[l_k,])
+    }
+    
+    #X = x[n,]
+    
+    ##### Nominator
+    #bernoulli_x_given_mu = bernoulli(X_f = X, mu_f = mu[k,])
+    
+    #p_given_x_nom = pi[k] * bernoulli_x_given_mu
+    
+    ##### Denominator
+    #denominator_sum = 0
+    
+    #for (j in 1:nrow(mu)) {
+      
+    #  ## First Bernoulli
+    #  bernoulli_x_given_mu_denom = bernoulli(X_f = X, mu_f = mu[j,])
+    #  p_given_x_denom = pi[j] * bernoulli_x_given_mu_denom
+    #  denominator_sum = denominator_sum + p_given_x_denom
+    #}
+    
+    return(nominator/denominator)
+  }
+  
   for (l_n in 1:N) {
     for (l_k in 1:K) {
-      z[l_n, l_k] = gamma_calc(l_n, l_k)
+      z[l_n, l_k] = gamma(l_n, l_k)
     }
   }
   
@@ -140,7 +137,7 @@ for(it in 1:max_it) {
   for (i in 1:N) {
     k_sum = 0
     for (l_k in 1:K) {
-      current_val = pi[k] * bernoulli(X_f = x[i,], mu_f = mu[l_k,])
+      current_val = pi[l_k] * bernoulli(X_f = x[i,], mu_f = mu[l_k,])
       k_sum = k_sum + current_val
     }
     
@@ -149,15 +146,14 @@ for(it in 1:max_it) {
   }
 
   
-  
   cat("iteration: ", it, "log likelihood: ", llik[it], "\n")
   flush.console()
   # Stop if the lok likelihood has not changed significantly
   # Your code here
   
-  if (abs(old_likelihood-current_likelihood) < min_change) break
+  #if (it > 1 && abs(llik[it-1] - current_likelihood) < min_change) break
   
-  old_likelihood <<- current_likelihood
+  llik[it] = current_likelihood
  
   #M-step: ML parameter estimation from the data and fractional component assignments
   # Your code here
