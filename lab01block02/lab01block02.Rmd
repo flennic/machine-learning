@@ -2,14 +2,17 @@
 title: "Ensemble Methods and Mixture Models"
 author: "Maximilian Pfundstein (maxpf364)"
 date: "27 November 2018"
-bibliography: sources.bib
 output:
+  pdf_document:
+    toc: yes
+    toc_depth: 3
   html_document:
     df_print: paged
-    toc_float: true
-  pdf_document:
-    toc: true
-    toc_depth: 3
+    toc_float: yes
+  word_document:
+    toc: yes
+    toc_depth: '3'
+bibliography: sources.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -43,9 +46,9 @@ kable(head(spambase[,48:58]), caption = "spambase.csv")
 
 ```
 
-The following source code calls the Random Forest and AdaBoost implementation and uses the predict function of each for getting the error rates for the training and the validation data set. The functions are called for 10, 20, ..., 100 trees.
+The source code calls the Random Forest and AdaBoost implementation and uses the predict function of each for getting the error rates for the training and the validation data set. The functions are called for 10, 20, ..., 100 trees.
 
-```{r, echo=TRUE}
+```{r, echo = TRUE, include = FALSE}
 
 # General Information
 c_formula = Spam ~ .
@@ -149,17 +152,17 @@ We can observe that the Random Forest is performing way better than AdaBoost. St
 # 2 Mixture Models
 For the EM-algorithm one must calculate the $Z$ matrix, the likelihood $L$ and the new $\mu$ and $\pi$ for each iteration. These can be done with matrix multiplications and thus in the followingit will be explained which formulas were used and what the values $Z$, $L$, $\mu$, $\pi$ and $X$ mean.
 
-## Values axplaination
+## Explanation Of Involved Values
 
-We have $X$ which holds $N = 1000$ coin tosses where the coin was tossed $D$ times. In the real world we will not know from how many components our data is derived nor how many entries belong to each component.
+We have $X$ which holds $N = 1000$ entries with $D$ dimensions In the real world we will not know from how many components our data is derived nor how many entries belong to each component.
 
 In this example $\pi$ holds our estimate how many datapoints from $X$ belong to $K_i$ (which is $1/3$ for each, but let's suppose we don't know.)
 
-$\mu$ represents the probability for each $D$ to be head or tail for each $K_i$.
+$\mu$ represents the probability for each $D$ to be 0 or 1 for each $K_i$.
 
-The likelihood $L$ is basically the expected value of our parameters that our model derived from the data. The goal is to maximize tis value iteratively. Due to [Jensen's inequality](https://en.wikipedia.org/wiki/Jensen%27s_inequality) it can be proofed that the likelihood is always greater or equal in the next iteration step of the EM-algorithm [Gently Building Up the EM Algorithm](https://abidlabs.github.io/EM-Algorithm/#mjx-eqn-eq5). Thus we will at least not get worste with each iteration, we shold just care if the likelihood doesn't improved much with an itration and then stop. The $min_change$ is set to $0.1$ (note that we speak about the ln-likelihood).
+The likelihood $L$ is basically the expected value of our parameters that our model derived from the data. The goal is to maximize tis value iteratively. Due to [Jensen's Inequality](https://en.wikipedia.org/wiki/Jensen%27s_inequality) it can be proofed that the likelihood is always greater or equal in the next iteration step of the EM-algorithm [Gently Building Up the EM Algorithm](https://abidlabs.github.io/EM-Algorithm/#mjx-eqn-eq5). Thus, we will at least not get worste with each iteration, we shold just care if the likelihood doesn't improved much with an itration and then stop. The $min\_change$ is set to $0.1$ (note that we speak about the ln-likelihood).
 
-$Z$ holds the probability for each set of coin tosses (row in $X$) to belong to each $K_i$. We always choose the one which most likely fits to the observed data and use that to update ouzr priors.
+$Z$ holds the probability for each set of $X$ (row in $X$) to belong to each $K_i$. We always choose the one which most likely fits to the observed data and use that to update ouzr priors.
 
 ## Mathematical Equations
 
@@ -183,7 +186,7 @@ We will use $P(x)$ later to calculate the likelihood $L$ but for now let's calcu
 
 $$P(z_{nk}|x_n,\mu,\pi) = Z = \frac{\pi_k * p(x_n|\mu_k)}{\sum_k * p(x_n|\mu_k)}$$
 
-The likelihood $L$ is given by the following equation which can be found in [@pattern-recognition] on page 443 equation 9.14.
+The likelihood $L$ is given by the following equation which can be found in [@pattern-recognition] on page 433 equation 9.14.
 
 $$\ln p(X|\pi,\mu,\Sigma) = L = \sum_{n=1}^{N} ln\{ \sum_{k=1}^{K}\pi_k * N(x_n|\mu_k,\Sigma_k) \}$$
 As we already have the value inside the curly braces ($P(x)$) it's basically just the sum of the logarithms over $n$.
@@ -286,7 +289,7 @@ for(it in 1:max_it) {
 kable(pi, caption = "pi")
 kable(mu, caption = "mu")
 kable(it, caption = "Number of Iterations")
-kable(llik[1:it], caption = "Ln-Likelihood")
+kable(llik[it], caption = "Ln-Likelihood")
 plot(mu[1,], type="o", col="blue", ylim=c(0,1))
 points(mu[2,], type="o", col="red")
 plot(llik[1:it], type="o")
@@ -339,7 +342,7 @@ for(it in 1:max_it) {
 kable(pi, caption = "pi")
 kable(mu, caption = "mu")
 kable(it, caption = "Number of Iterations")
-kable(llik[1:it], caption = "Ln-Likelihood")
+kable(llik[it], caption = "Ln-Likelihood")
 plot(mu[1,], type="o", col="blue", ylim=c(0,1))
 points(mu[2,], type="o", col="red")
 points(mu[3,], type="o", col="green")
@@ -393,7 +396,7 @@ for(it in 1:max_it) {
 kable(pi, caption = "pi")
 kable(mu, caption = "mu")
 kable(it, caption = "Number of Iterations")
-kable(llik[1:it], caption = "Ln-Likelihood")
+kable(llik[it], caption = "Ln-Likelihood")
 plot(mu[1,], type="o", col="blue", ylim=c(0,1))
 points(mu[2,], type="o", col="red")
 points(mu[3,], type="o", col="green")
@@ -402,8 +405,10 @@ plot(llik[1:it], type="o")
 
 ```
 
-### Conslusions
+### Conclusions
+We can see that with $K = 2$ the model is underfitting as the line for $0.5$ is completely missing while with $K = 4$ the model is overfitting. For $K = 2$ the model is acutally not performing that bad while for $K = 4$ we can see that the green line (from the real) data is missing and that the *new* green and blue line are dancing around the *invisible* line at $0.5$. It looks like the average of the blue and the green line would form the true missing line.
 
+For $K = 3$, so with the true number of components, the models converges fastest.
 
 
 # Appendix
