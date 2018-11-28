@@ -54,6 +54,7 @@ for(it in 1:max_it) {
   cat("iteration: ", it, "log likelihood: ", llik[it], "\n")
   flush.console()
   # Stop if the lok likelihood has not changed significantly
+  if (it > 1 && abs(llik[it-1] - current_likelihood) < min_change) break
   
   #M-step: ML parameter estimation from the data and fractional component assignments
   pi = colSums(Z) / N
