@@ -168,8 +168,6 @@ for(it in 1:max_it) {
         ## Nominator
         sum_nominator = sum_nominator + z[l_n, l_k] * x[l_n, d]
         
-        
-        
         ## Denominator
         sum_denominator = sum_denominator + z[l_n, l_k]
         
@@ -191,6 +189,7 @@ for(it in 1:max_it) {
     ## Denominator (is just N)
     pi[k_l] = pi_new_sum / N
   }
+  a = 5
 }
 
 pi
