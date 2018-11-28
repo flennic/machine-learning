@@ -4,12 +4,12 @@ author: "Maximilian Pfundstein (maxpf364)"
 date: "27 November 2018"
 #bibliography: sources.bib
 output:
-  pdf_document:
-    toc: true
-    toc_depth: 3
   html_document:
     df_print: paged
     toc_float: true
+  pdf_document:
+    toc: true
+    toc_depth: 3
 ---
 
 ```{r setup, include=FALSE}
@@ -148,8 +148,24 @@ In this example $\pi$ holds our estimate how many datapoints from $X$ belong to 
 
 $\mu$ represents the probability for each $D$ to be head or tail for each $K_i$.
 
-The likelihood $L$is basically the expected value of our parameters that our model derived from the data. The goal is to maximize tis value iteratively. Due to [Jensen's inequality](https://en.wikipedia.org/wiki/Jensen%27s_inequality) it can be proofed that the likelihood is always greater or equal in the next iteration step of the EM-algorithm [Gently Building Up the EM Algorithm](https://abidlabs.github.io/EM-Algorithm/#mjx-eqn-eq5). Thus we will at least not get worste with each iteration, we shold just care if the likelihood doesn't improved much with an itration and then stop. The $min_change$ is set to $0.1$ (note that we speak about the ln-likelihood).
+The likelihood $L$ is basically the expected value of our parameters that our model derived from the data. The goal is to maximize tis value iteratively. Due to [Jensen's inequality](https://en.wikipedia.org/wiki/Jensen%27s_inequality) it can be proofed that the likelihood is always greater or equal in the next iteration step of the EM-algorithm [Gently Building Up the EM Algorithm](https://abidlabs.github.io/EM-Algorithm/#mjx-eqn-eq5). Thus we will at least not get worste with each iteration, we shold just care if the likelihood doesn't improved much with an itration and then stop. The $min_change$ is set to $0.1$ (note that we speak about the ln-likelihood).
 
+$Z$ holds the probability for each set of coin tosses (row in $X$) to belong to each $K_i$. We always choose the one which most likely fits to the observed data and use that to update ouzr priors.
+
+Let's have a look at the mathematical equations and how we can derive our formulas for the matrix multiplication from that
+
+The first step is to calculate $Z$. We will divide that in first calculating $Bx$ which holds $Bernoulli(x|\mu_k)$ and afterwards calculating $p(x)$ which we can use to calculate $Z$. The formales will reduce the left side to single letters which you will find in the source code.
+
+
+$$Bernoulli(x|\mu_k) = B = \prod_{i} \mu^{x_i}_{k_i} * (1 - \mu_{k_i})^{1-x_i}$$
+
+For using matrix multiplication we need to get rid of the product and the exponents, so we use $ln$ on both sides:
+
+$$\ln(B) = \sum \ln (\mu^{x_i}_{k_i}) * x_i + \sum \ln (1-\mu_{x_i}) * (1 - x_i)$$
+Now let's get rid of the $ln$ on the left side:
+
+$$B = e^{\sum \ln (\mu^{x_i}_{k_i}) * x_i + \sum \ln (1-\mu_{x_i}) * (1 - x_i)}$$
+This craves to be put into
 
 
 # Appendix
