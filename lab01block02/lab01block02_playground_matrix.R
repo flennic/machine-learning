@@ -56,7 +56,7 @@ for(it in 1:max_it) {
   # Stop if the lok likelihood has not changed significantly
   
   #M-step: ML parameter estimation from the data and fractional component assignments
-  pi = colSums(Z)/N
+  pi = colSums(Z) / N
   mu = (t(Z) %*% x) / colSums(Z)
 }
 pi
