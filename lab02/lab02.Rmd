@@ -1,51 +1,161 @@
 ---
 title: "Machine Learning Lab 02"
 author: "Maximilian Pfundstein (maxpf364)"
-date: "29 November 2018"
+date: "`r Sys.Date()`"
 output:
-  html_document:
-    df_print: paged
-    toc_float: true
   pdf_document:
     toc: true
     toc_depth: 3
+    number_sections: true
+  html_document:
+    df_print: paged
+    toc_float: true
+    number_sections: true
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(knitr)
 library(ggplot2)
+library(readxl)
+library(tree)
 ```
 
-## Assignment 2: Analysis of Credit Scoring
+# Assignment 2: Analysis of Credit Scoring
 
-### 1)
+## Import ```creditscoring.xls```
 
 Let's import the data and have a look at it.
 
-```{r}
+```{r, echo = FALSE}
 
 set.seed(12345)
-australianCrabs = read.csv("./australian-crabs.csv")
-kable(head(australianCrabs), caption = "australian-crabs.csv")
-ggplot(australianCrabs, aes(x = CL, y = RW, colour = sex)) +
-  geom_point() + geom_smooth()
-```
-
-**Question:** Do you think that this data is easy to classify by linear discriminant analysis? Motivate your answer.
-
-**Asnwer:**
-
-
-## Assignment 3: Uncertainty Estimation
-
-```{r}
-
-set.seed(12345)
+creditscoring = read_excel("./creditscoring.xls")
+creditscoring$good_bad = as.factor(creditscoring$good_bad)
+kable(head(creditscoring[,(ncol(creditscoring)-10):ncol(creditscoring)]), caption = "creditscoring.xls")
 
 ```
 
-## Assignemnt 4: Principal Components
+```{r, echo = FALSE}
+
+n=dim(creditscoring)[1]
+set.seed(12345)
+id=sample(1:n, floor(n*0.4))
+train=creditscoring[id,]
+
+id1=setdiff(1:n, id)
+set.seed(12345)
+id2=sample(id1, floor(n*0.3))
+
+valid=creditscoring[id2,]
+id3=setdiff(id1,id2)
+test=creditscoring[id3,]
+
+```
+
+## Decision Tree Fitting
+
+**Task:** Fit a decision tree to the training data by using the following measures of impurity:
+
+a. Deviance
+b. Gini index
+
+```{r, echo = FALSE}
+
+# Create the models
+decisionTree_deviance = tree(good_bad ~ ., data = train, split = "deviance")
+decisionTree_gini = tree(good_bad ~ ., data = train, split = "gini")
+
+```
+
+```{r, echo = FALSE}
+
+# Prediction
+prediction_deviance_train =
+  predict(decisionTree_deviance, newdata = train, type = "class")
+prediction_deviance_test =
+  predict(decisionTree_deviance, newdata = test, type = "class")
+
+predictiona_gini_train =
+  predict(decisionTree_gini, newdata = train, type = "class")
+prediction_gini_test =
+  predict(decisionTree_gini, newdata = test, type = "class")
+
+```
+
+### Deviance
+
+The model for the decision tree using deviance.
+
+```{r, echo = FALSE}
+
+summary(decisionTree_deviance)
+#plot(decisionTree_deviance)
+
+```
+
+The confusion matrix looks as follows:
+
+```{r, echo = FALSE}
+
+confusion_matrix_deviance = table(prediction_deviance_test, test$good_bad)
+kable(confusion_matrix_deviance)
+
+```
+
+Therefore the error rate is:
+
+```{r, echo = FALSE}
+
+error_rate_deviance = 1 - sum(diag(confusion_matrix_deviance)/sum(confusion_matrix_deviance))
+print(error_rate_deviance)
+
+```
+
+### Gini
+
+The model for the decision tree using gini
+
+```{r, echo = FALSE}
+
+summary(decisionTree_gini)
+#plot(decisionTree_gini)
+
+```
+
+The confusion matrix looks as follows:
+
+```{r, echo = FALSE}
+
+confusion_matrix_gini = table(prediction_gini_test, test$good_bad)
+kable(confusion_matrix_gini)
+
+```
+Therefore the error rate is:
+
+```{r, echo = FALSE}
+
+error_rate_gini = 1 - sum(diag(confusion_matrix_gini)/sum(confusion_matrix_gini))
+print(error_rate_gini)
+
+```
+
+### Conclusions 
+
+**Question:** Report the misclassification rates for the training and test data. Choose the measure providing the better results for the following steps.
+
+**Answer:** The misqualification rate for the decision tree with deviance is ```0.33``` compared to the decision tree with gini as the classifier which has a misqualification rate of ```0.3666667```. Therefor we will continue with using the decision tree that uses **deviance** as the classifier.
+
+
+# Assignment 3: Uncertainty Estimation
+
+```{r}
+
+set.seed(12345)
+
+```
+
+# Assignemnt 4: Principal Components
 
 ```{r}
 
