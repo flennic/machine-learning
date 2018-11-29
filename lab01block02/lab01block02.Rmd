@@ -168,27 +168,27 @@ $Z$ holds the probability for each set of $X$ (row in $X$) to belong to each $K_
 
 Let's have a look at the mathematical equations and how we can derive our formulas for the matrix multiplication from that. Formulas without a source are either taken from the lecture slides or derived by previous formulas.
 
-The first step is to calculate $Z$. We will divide that in first calculating $Bx$ which holds $Bernoulli(x|\mu_k)$ and afterwards calculating $p(x)$ which we can use to calculate $Z$. The formales will reduce the left side to single letters which you will find in the source code.
+The first step is to calculate $Z$. We will divide that in first calculating $Bx$ which contains $Bernoulli(x|\mu_k)$ and afterwards calculating $p(x)$ which we can use to calculate $Z$. The formulas will have (left side) will be assigned to a letter which you will find in the source code.
 
 
-$$Bernoulli(x|\mu_k) = B_x = \prod_{i} \mu^{x_i}_{k_i} * (1 - \mu_{k_i})^{1-x_i}$$
+$$Bernoulli(x|\mu_k) = B_x = \prod_{i} \mu^{x_i}_{k_i} (1 - \mu_{k_i})^{1-x_i}$$
 
 For using matrix multiplication we need to get rid of the product and the exponents, so we use $ln$ on both sides:
 
-$$\ln(B) = \sum \ln (\mu^{x_i}_{k_i}) * x_i + \sum \ln (1-\mu_{x_i}) * (1 - x_i)$$
+$$\ln(B) = \sum \ln (\mu^{x_i}_{k_i}) x_i + \sum \ln (1-\mu_{x_i}) (1 - x_i)$$
 Now let's get rid of the $ln$ on the left side:
 
-$$B_x = e^{\sum \ln (\mu^{x_i}_{k_i}) * x_i + \sum \ln (1-\mu_{x_i}) * (1 - x_i)}$$
+$$B_x = e^{\sum \ln (\mu^{x_i}_{k_i}) x_i + \sum \ln (1-\mu_{x_i}) (1 - x_i)}$$
 This craves to be put into a neat matrix multiplication. Okay, let's look for $p(x)$.
 
-$$p(x) = P_x =\sum_k \pi_k * Bernoulli(x|\mu_k) = \sum_k \pi_k * B$$
+$$p(x) = P_x =\sum_k \pi_k Bernoulli(x|\mu_k) = \sum_k \pi_k B$$
 We will use $P(x)$ later to calculate the likelihood $L$ but for now let's calculate Z:
 
-$$P(z_{nk}|x_n,\mu,\pi) = Z = \frac{\pi_k * p(x_n|\mu_k)}{\sum_k * p(x_n|\mu_k)}$$
+$$P(z_{nk}|x_n,\mu,\pi) = Z = \frac{\pi_k p(x_n|\mu_k)}{\sum_k p(x_n|\mu_k)}$$
 
 The likelihood $L$ is given by the following equation which can be found in [@pattern-recognition] on page 433 equation 9.14.
 
-$$\ln p(X|\pi,\mu,\Sigma) = L = \sum_{n=1}^{N} ln\{ \sum_{k=1}^{K}\pi_k * N(x_n|\mu_k,\Sigma_k) \}$$
+$$\ln p(X|\pi,\mu,\Sigma) = L = \sum_{n=1}^{N} ln\{ \sum_{k=1}^{K}\pi_k N(x_n|\mu_k,\Sigma_k) \}$$
 As we already have the value inside the curly braces ($P(x)$) it's basically just the sum of the logarithms over $n$.
 
 For calculating $\pi$ we use the following.
@@ -197,7 +197,7 @@ $$\pi_{k}^{ML} = pi = \frac{\sum_k p(z_{nk|x_n|\mu|\pi})}{N}$$
 And finally we use the following for calculating $\mu$. Note that the nominator of $\pi$ and the denominator of $\mu$ are the same.
 
 $$\mu_{k}^{ML} = mu = \frac{\pi_k p(z_{nk|x_n|\mu|\pi})}{\sum_k \pi_k p(z_{nk|x_n|\mu|\pi})}$$
-Voilà we're done, now the coding is actually just a few lines of code, you'll find in in the appendix.
+Voilà we're done, now the coding is actually just a few lines of code, you'll find it in the appendix.
 
 ## Execution
 
@@ -212,13 +212,13 @@ These are the true values for $\mu$ and $\pi$:
 ################################################################################
 
 set.seed(1234567890)
-max_it <- 100 # max number of EM iterations
-min_change <- 0.1 # min change in log likelihood between two consecutive EM iterations
+max_it = 100 # max number of EM iterations
+min_change = 0.1 # min change in log likelihood between two consecutive EM iterations
 N=1000 # number of training points
 D=10 # number of dimensions
-x <- matrix(nrow=N, ncol=D) # training data
-true_pi <- vector(length = 3) # true mixing coefficients
-true_mu <- matrix(nrow=3, ncol=D) # true conditional distributions
+x = matrix(nrow=N, ncol=D) # training data
+true_pi = vector(length = 3) # true mixing coefficients
+true_mu = matrix(nrow=3, ncol=D) # true conditional distributions
 
 true_pi=c(1/3, 1/3, 1/3)
 true_mu[1,]=c(0.5,0.6,0.4,0.7,0.3,0.8,0.2,0.9,0.1,1)
@@ -227,9 +227,9 @@ true_mu[3,]=c(0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5)
 
 # Producing the training data
 for(n in 1:N) {
-  k <- sample(1:3,1,prob=true_pi)
+  k = sample(1:3,1,prob=true_pi)
   for(d in 1:D) {
-    x[n,d] <- rbinom(1,1,true_mu[k,d])
+    x[n,d] = rbinom(1,1,true_mu[k,d])
   }
 }
 
@@ -261,7 +261,7 @@ llik = vector(length = max_it) # log likelihood of the EM iterations
 pi = runif(K,0.49,0.51)
 pi = pi / sum(pi)
 for(k in 1:K) {
-  mu[k,] <- runif(D,0.49,0.51)
+  mu[k,] = runif(D,0.49,0.51)
 }
 
 for(it in 1:max_it) {
@@ -314,7 +314,7 @@ llik = vector(length = max_it) # log likelihood of the EM iterations
 pi = runif(K,0.49,0.51)
 pi = pi / sum(pi)
 for(k in 1:K) {
-  mu[k,] <- runif(D,0.49,0.51)
+  mu[k,] = runif(D,0.49,0.51)
 }
 
 for(it in 1:max_it) {
@@ -368,7 +368,7 @@ llik = vector(length = max_it) # log likelihood of the EM iterations
 pi = runif(K,0.49,0.51)
 pi = pi / sum(pi)
 for(k in 1:K) {
-  mu[k,] <- runif(D,0.49,0.51)
+  mu[k,] = runif(D,0.49,0.51)
 }
 
 for(it in 1:max_it) {

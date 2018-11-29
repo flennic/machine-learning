@@ -1,0 +1,54 @@
+---
+title: "Machine Learning Lab 02"
+author: "Maximilian Pfundstein (maxpf364)"
+date: "29 November 2018"
+output:
+  html_document:
+    df_print: paged
+    toc_float: true
+  pdf_document:
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(ggplot2)
+```
+
+## Assignment 2: Analysis of Credit Scoring
+
+### 1)
+
+Let's import the data and have a look at it.
+
+```{r}
+
+set.seed(12345)
+australianCrabs = read.csv("./australian-crabs.csv")
+kable(head(australianCrabs), caption = "australian-crabs.csv")
+ggplot(australianCrabs, aes(x = CL, y = RW, colour = sex)) +
+  geom_point() + geom_smooth()
+```
+
+**Question:** Do you think that this data is easy to classify by linear discriminant analysis? Motivate your answer.
+
+**Asnwer:**
+
+
+## Assignment 3: Uncertainty Estimation
+
+```{r}
+
+set.seed(12345)
+
+```
+
+## Assignemnt 4: Principal Components
+
+```{r}
+
+set.seed(12345)
+
+```
