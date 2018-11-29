@@ -3,13 +3,13 @@ title: "Machine Learning Lab 02"
 author: "Maximilian Pfundstein (maxpf364)"
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
-    toc: true
-    toc_depth: 3
-    number_sections: true
   html_document:
     df_print: paged
     toc_float: true
+    number_sections: true
+  pdf_document:
+    toc: true
+    toc_depth: 3
     number_sections: true
 ---
 
@@ -19,6 +19,7 @@ library(knitr)
 library(ggplot2)
 library(readxl)
 library(tree)
+library(e1071)
 ```
 
 # Assignment 2: Analysis of Credit Scoring
@@ -32,7 +33,8 @@ Let's import the data and have a look at it.
 set.seed(12345)
 creditscoring = read_excel("./creditscoring.xls")
 creditscoring$good_bad = as.factor(creditscoring$good_bad)
-kable(head(creditscoring[,(ncol(creditscoring)-10):ncol(creditscoring)]), caption = "creditscoring.xls")
+kable(head(creditscoring[,(ncol(creditscoring)-10):ncol(creditscoring)]),
+      caption = "creditscoring.xls")
 
 ```
 
@@ -168,7 +170,7 @@ trainScore = rep(0, 9)
 testScore = rep(0, 9)
 
 for(i in 2:9) {
-  prunedTree = prune.tree(decisionTree_deviance, best=i)
+  prunedTree = prune.tree(decisionTree_deviance, best = i)
   pred = predict(prunedTree, newdata = valid, type = "tree")
   trainScore[i] = deviance(prunedTree)
   testScore[i] = deviance(pred)
@@ -218,9 +220,7 @@ title("Optimal Tree")
 
 
 
-
-
-### Iterpretating the Tree Structure
+### Interpretating the Tree Structure
 Some blabla must be added.
 
 ### Estimate of the Missclassification Rate
@@ -246,6 +246,68 @@ print(error_optimalTree)
 ```
 
 ## Naïve Bayes
+
+**Task: **
+
+- Use training data to perform classification using Naïve Bayes.
+- Report the confusion matrices and misclassification rates for the training and for the test data.
+- Compare the results with those from step 3.
+
+### Classification with Naïve Bayes
+
+Let's train the model and have a look at the summary.
+
+```{r, echo = FALSE}
+
+naiveBayesModel = naiveBayes(good_bad ~ ., data = train)
+summary(naiveBayesModel)
+
+```
+
+
+### Naïve Bayes Confusion Matrices and Misclassification Rates
+
+```{r, echo = FALSE}
+
+# Prediction
+prediction_bayes_train =
+  predict(naiveBayesModel, newdata = train, type = "class")
+prediction_bayes_test =
+  predict(naiveBayesModel, newdata = test, type = "class")
+
+confusion_matrix__bayes_train = table(prediction_bayes_train, train$good_bad)
+confusion_matrix__bayes_test = table(prediction_bayes_test, test$good_bad)
+
+error_bayes_train = 1 - sum(diag(confusion_matrix__bayes_train)/
+                              sum(confusion_matrix__bayes_train))
+error_bayes_test =  1 - sum(diag(confusion_matrix__bayes_test)/
+                              sum(confusion_matrix__bayes_test))
+
+```
+
+Data for Naïve Bayes on train:
+
+```{r, echo = FALSE}
+
+kable(confusion_matrix__bayes_train)
+print(error_bayes_train)
+
+```
+
+Data for Naïve Bayes on test:
+
+```{r, echo = FALSE}
+
+kable(confusion_matrix__bayes_test)
+print(error_bayes_test)
+
+```
+
+### Comparison with Step 3
+
+We can see that the misqualification rate for the optimized decision tree with ```0.2633333``` is better than the Naïve Bayes approach with a rate of ```0.29```. We have to keep in mind that we first had to find the best tree and thus spend more time optimizing the hyper parameters.
+
+Add more blabla.
 
 # Assignment 3: Uncertainty Estimation
 
