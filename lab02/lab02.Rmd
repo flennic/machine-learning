@@ -3,13 +3,13 @@ title: "Machine Learning Lab 02"
 author: "Maximilian Pfundstein (maxpf364)"
 date: "`r Sys.Date()`"
 output:
-  html_document:
-    df_print: paged
-    toc_float: true
-    number_sections: true
   pdf_document:
     toc: true
     toc_depth: 3
+    number_sections: true
+  html_document:
+    df_print: paged
+    toc_float: true
     number_sections: true
 ---
 
@@ -308,6 +308,81 @@ print(error_bayes_test)
 We can see that the misqualification rate for the optimized decision tree with ```0.2633333``` is better than the Naïve Bayes approach with a rate of ```0.29```. We have to keep in mind that we first had to find the best tree and thus spend more time optimizing the hyper parameters.
 
 Add more blabla.
+
+### TPR, FPR and ROC Curves
+
+```{r, echo = FALSE}
+
+# prediction optimal tree
+prediction_optimalTree_test_p =
+  predict(optimalTree, newdata = test, type = "vector")
+# prediction naive bayes
+prediction_bayes_test_p =
+  predict(naiveBayesModel, newdata = test, type = "raw")
+
+pi = seq(from = 0.05, to = 0.95, by = 0.05)
+fprs_tree = c()
+tprs_tree = c()
+fprs_bayes = c()
+tprs_bayes = c()
+
+for (i in pi) {
+  current_tree_pi_confusion =
+    table(test$good_bad, factor(prediction_optimalTree_test_p[,2] > i,
+                                lev=c(TRUE, FALSE)))
+  current_bayes_pi_confusion =
+    table(test$good_bad, factor(prediction_bayes_test_p[,2] > i,
+                                lev=c(TRUE, FALSE)))
+  
+  # FPR = FP / N-
+  # TPR = TP / N+
+  fprs_tree =c(fprs_tree, current_tree_pi_confusion[1,2]/
+                 sum(current_tree_pi_confusion[1,]))
+  tprs_tree = c(tprs_tree, current_tree_pi_confusion[2,2]/
+                  sum(current_tree_pi_confusion[2,]))
+  
+  fprs_bayes = c(fprs_bayes, current_bayes_pi_confusion[1,2]/
+                   sum(current_bayes_pi_confusion[1,]))
+  tprs_bayes = c(tprs_bayes, current_bayes_pi_confusion[2,2]/
+                   sum(current_bayes_pi_confusion[2,]))
+}
+
+roc_values = data.frame(fprs_tree, tprs_tree, fprs_bayes, tprs_bayes)
+
+```
+
+**Task:** Compute the TPR and FPR values for the two models.
+
+The corrensponding values for FPR and RTP can be seen in the following table.
+
+```{r, echo = FALSE}
+
+kable(roc_values)
+
+```
+
+**Task:** Plot the corresponding ROC curves.
+
+This is the ROC curve of the Optimized Tree and Naïve Bayes.
+
+```{r, echo = FALSE}
+
+ggplot(roc_values) +
+  geom_line(aes(x = tprs_tree, y = fprs_tree,
+                colour = "ROC Optimized Tree")) +
+  geom_point(aes(x = tprs_tree, y = fprs_tree), colour = "orange") +
+  
+  geom_line(aes(x = tprs_bayes, y = fprs_bayes,
+                colour = "ROC Naive Bayes")) +
+  geom_point(aes(x = tprs_bayes, y = fprs_bayes), colour = "blue") +
+  
+  labs(title = "ROC for Optimized Tree and Naive Bayes", y = "FPR",
+       x = "TRP", color = "Legend") +
+  scale_color_manual(values = c("blue", "orange"))
+
+```
+
+**Question:** Conclusion?
 
 # Assignment 3: Uncertainty Estimation
 
