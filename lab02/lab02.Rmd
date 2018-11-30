@@ -3,13 +3,13 @@ title: "Machine Learning Lab 02"
 author: "Maximilian Pfundstein (maxpf364)"
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
-    toc: true
-    toc_depth: 3
-    number_sections: true
   html_document:
     df_print: paged
     toc_float: true
+    number_sections: true
+  pdf_document:
+    toc: true
+    toc_depth: 3
     number_sections: true
 ---
 
@@ -275,13 +275,13 @@ prediction_bayes_train =
 prediction_bayes_test =
   predict(naiveBayesModel, newdata = test, type = "class")
 
-confusion_matrix__bayes_train = table(prediction_bayes_train, train$good_bad)
-confusion_matrix__bayes_test = table(prediction_bayes_test, test$good_bad)
+confusion_matrix_bayes_train = table(prediction_bayes_train, train$good_bad)
+confusion_matrix_bayes_test = table(prediction_bayes_test, test$good_bad)
 
-error_bayes_train = 1 - sum(diag(confusion_matrix__bayes_train)/
-                              sum(confusion_matrix__bayes_train))
-error_bayes_test =  1 - sum(diag(confusion_matrix__bayes_test)/
-                              sum(confusion_matrix__bayes_test))
+error_bayes_train = 1 - sum(diag(confusion_matrix_bayes_train)/
+                              sum(confusion_matrix_bayes_train))
+error_bayes_test =  1 - sum(diag(confusion_matrix_bayes_test)/
+                              sum(confusion_matrix_bayes_test))
 
 ```
 
@@ -289,7 +289,7 @@ Data for Naïve Bayes on train:
 
 ```{r, echo = FALSE}
 
-kable(confusion_matrix__bayes_train)
+kable(confusion_matrix_bayes_train)
 print(error_bayes_train)
 
 ```
@@ -298,7 +298,7 @@ Data for Naïve Bayes on test:
 
 ```{r, echo = FALSE}
 
-kable(confusion_matrix__bayes_test)
+kable(confusion_matrix_bayes_test)
 print(error_bayes_test)
 
 ```
@@ -320,7 +320,7 @@ prediction_optimalTree_test_p =
 prediction_bayes_test_p =
   predict(naiveBayesModel, newdata = test, type = "raw")
 
-pi = seq(from = 0.05, to = 0.95, by = 0.05)
+pi = seq(from = 0.00, to = 1.0, by = 0.05)
 fprs_tree = c()
 tprs_tree = c()
 fprs_bayes = c()
@@ -336,14 +336,14 @@ for (i in pi) {
   
   # FPR = FP / N-
   # TPR = TP / N+
-  fprs_tree =c(fprs_tree, current_tree_pi_confusion[1,2]/
+  fprs_tree =c(fprs_tree, current_tree_pi_confusion[1,1]/
                  sum(current_tree_pi_confusion[1,]))
-  tprs_tree = c(tprs_tree, current_tree_pi_confusion[2,2]/
+  tprs_tree = c(tprs_tree, current_tree_pi_confusion[2,1]/
                   sum(current_tree_pi_confusion[2,]))
   
-  fprs_bayes = c(fprs_bayes, current_bayes_pi_confusion[1,2]/
+  fprs_bayes = c(fprs_bayes, current_bayes_pi_confusion[1,1]/
                    sum(current_bayes_pi_confusion[1,]))
-  tprs_bayes = c(tprs_bayes, current_bayes_pi_confusion[2,2]/
+  tprs_bayes = c(tprs_bayes, current_bayes_pi_confusion[2,1]/
                    sum(current_bayes_pi_confusion[2,]))
 }
 
@@ -368,21 +368,75 @@ This is the ROC curve of the Optimized Tree and Naïve Bayes.
 ```{r, echo = FALSE}
 
 ggplot(roc_values) +
-  geom_line(aes(x = tprs_tree, y = fprs_tree,
+  geom_line(aes(x = fprs_tree, y = tprs_tree,
                 colour = "ROC Optimized Tree")) +
-  geom_point(aes(x = tprs_tree, y = fprs_tree), colour = "orange") +
+  geom_point(aes(x = fprs_tree, y = tprs_tree), colour = "orange") +
   
-  geom_line(aes(x = tprs_bayes, y = fprs_bayes,
+  geom_line(aes(x = fprs_bayes, y = tprs_bayes,
                 colour = "ROC Naive Bayes")) +
-  geom_point(aes(x = tprs_bayes, y = fprs_bayes), colour = "blue") +
+  geom_point(aes(x = fprs_bayes, y = tprs_bayes), colour = "blue") +
   
-  labs(title = "ROC for Optimized Tree and Naive Bayes", y = "FPR",
-       x = "TRP", color = "Legend") +
+  labs(title = "ROC for Optimized Tree and Naïve Bayes", y = "TPR",
+       x = "FRP", color = "Legend") +
   scale_color_manual(values = c("blue", "orange"))
 
 ```
 
 **Question:** Conclusion?
+
+## Naïve Bayes Classification with Loss Matrix
+
+**Task: **
+- Repeat Naïve Bayes classification as it was in step 4 but use the following loss
+matrix.
+- Report the confusion matrix for the training and test data.
+
+```{r, echo = FALSE}
+
+L = matrix(c(0, 10, 1, 0), nrow = 2)
+colnames(L) = c("Predicted", "Predicted")
+rownames(L) = c("good", "bad")
+kable(L)
+
+```
+
+```{r, echo = FALSE}
+
+# Prediction
+prediction_bayes_train_raw =
+  predict(naiveBayesModel, newdata = train, type = "raw")
+prediction_bayes_test_raw =
+  predict(naiveBayesModel, newdata = test, type = "raw")
+
+confusion_matrix_bayes_train = table(prediction_bayes_train_raw[,1]/prediction_bayes_train_raw[,2] > 10, train$good_bad)
+confusion_matrix_bayes_test = table(prediction_bayes_test_raw[,1]/prediction_bayes_test_raw[,2] > 10, test$good_bad)
+
+error_bayes_train_raw = 1 - sum(diag(confusion_matrix_bayes_train)/
+                              sum(confusion_matrix_bayes_train))
+error_bayes_test_raw =  1 - sum(diag(confusion_matrix_bayes_test)/
+                              sum(confusion_matrix_bayes_test))
+```
+
+
+Data for Training:
+
+```{r, echo = FALSE}
+
+kable(confusion_matrix_bayes_train)
+print(error_bayes_train_raw)
+
+```
+
+Data for Test:
+
+```{r, echo = FALSE}
+
+kable(confusion_matrix_bayes_test)
+print(error_bayes_test_raw)
+
+```
+
+
 
 # Assignment 3: Uncertainty Estimation
 
