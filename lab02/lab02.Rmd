@@ -3,13 +3,13 @@ title: "Machine Learning Lab 02"
 author: "Maximilian Pfundstein (maxpf364)"
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
-    toc: true
-    toc_depth: 3
-    number_sections: true
   html_document:
     df_print: paged
     toc_float: true
+    number_sections: true
+  pdf_document:
+    toc: true
+    toc_depth: 3
     number_sections: true
 ---
 
@@ -247,15 +247,15 @@ print(error_optimalTree)
 
 The last value shows the misclassification error on the test data set.
 
-## Naïve Bayes
+## Na?ve Bayes
 
 **Task: **
 
-- Use training data to perform classification using Naïve Bayes.
+- Use training data to perform classification using Na?ve Bayes.
 - Report the confusion matrices and misclassification rates for the training and for the test data.
 - Compare the results with those from step 3.
 
-### Classification with Naïve Bayes
+### Classification with Na?ve Bayes
 
 Let's train the model and have a look at the summary.
 
@@ -267,7 +267,7 @@ summary(naiveBayesModel)
 ```
 
 
-### Naïve Bayes Confusion Matrices and Misclassification Rates
+### Na?ve Bayes Confusion Matrices and Misclassification Rates
 
 ```{r, echo = FALSE}
 
@@ -287,7 +287,7 @@ error_bayes_test =  1 - sum(diag(confusion_matrix_bayes_test)/
 
 ```
 
-Data for Naïve Bayes on train:
+Data for Na?ve Bayes on train:
 
 ```{r, echo = FALSE}
 
@@ -296,7 +296,7 @@ print(error_bayes_train)
 
 ```
 
-Data for Naïve Bayes on test:
+Data for Na?ve Bayes on test:
 
 ```{r, echo = FALSE}
 
@@ -307,7 +307,7 @@ print(error_bayes_test)
 
 ### Comparison with Step 3
 
-We can see that the misqualification rate for the optimized decision tree with ```0.2633333``` is better than the Naïve Bayes approach with a rate of ```0.29```. We have to keep in mind that we first had to find the best tree and thus spend more time optimizing the hyper parameters.
+We can see that the misqualification rate for the optimized decision tree with ```0.2633333``` is better than the Na?ve Bayes approach with a rate of ```0.29```. We have to keep in mind that we first had to find the best tree and thus spend more time optimizing the hyper parameters.
 
 ## TPR, FPR and ROC Curves
 
@@ -353,7 +353,7 @@ roc_values = data.frame(fprs_tree, tprs_tree, fprs_bayes, tprs_bayes)
 
 **Task:** Compute the TPR and FPR values for the two models.
 
-The corresponding values for FPR and RTP can be seen in the following table.
+The corresponding values for FPR and TPR can be seen in the following table.
 
 ```{r, echo = FALSE}
 
@@ -363,7 +363,7 @@ kable(roc_values)
 
 **Task:** Plot the corresponding ROC curves.
 
-This is the ROC curve of the Optimized Tree and Naïve Bayes.
+This is the ROC curve of the Optimized Tree and Na?ve Bayes.
 
 ```{r, echo = FALSE}
 
@@ -373,10 +373,10 @@ ggplot(roc_values) +
   geom_point(aes(x = fprs_tree, y = tprs_tree), colour = "orange") +
   
   geom_line(aes(x = fprs_bayes, y = tprs_bayes,
-                colour = "ROC Naïve Bayes")) +
+                colour = "ROC Na?ve Bayes")) +
   geom_point(aes(x = fprs_bayes, y = tprs_bayes), colour = "blue") +
   
-  labs(title = "ROC for Optimized Tree and Naïve Bayes", y = "TPR",
+  labs(title = "ROC for Optimized Tree and Na?ve Bayes", y = "TPR",
        x = "FPR", color = "Legend") +
   scale_color_manual(values = c("blue", "orange"))
 
@@ -384,13 +384,13 @@ ggplot(roc_values) +
 
 **Question:** Conclusion?
 
-**Answer:** The ROC (receiver operating characteristic) curve shows how the models behaves for different threshold values. The greater the area under the curve the better the model can distinguish between two classes. This is due to the fact that we have overlapping distributions, which in worst case, are exactly on top of each other, which would result in a line at the 45 degree angle. As the distributations shift apart, our models will get better on average. Here we can observe, that the Naïve Bayes is in general better in distinguishing the two classes, the Optimized Tree mostly performs worse. We have to keep in mind that we have few datapoints for small FPR for the tree and that we've not spent any effort interpolating the line between those two points.
+**Answer:** The ROC (receiver operating characteristic) curve shows how the models behaves for different threshold values. The greater the area under the curve the better the model can distinguish between two classes. This is due to the fact that we have overlapping distributions, which in worst case, are exactly on top of each other, which would result in a line at the 45 degree angle. As the distributations shift apart, our models will get better on average. Here we can observe, that the Na?ve Bayes is in general better in distinguishing the two classes, the Optimized Tree mostly performs worse. We have to keep in mind that we have few datapoints for small FPR for the tree and that we've not spent any effort interpolating the line between those two points.
 
-## Naïve Bayes Classification with Loss Matrix
+## Na?ve Bayes Classification with Loss Matrix
 
 **Task: **
 
-- Repeat Naïve Bayes classification as it was in step 4 but use the following loss
+- Repeat Na?ve Bayes classification as it was in step 4 but use the following loss
 matrix.
 - Report the confusion matrix for the training and test data.
 - Compare the results with the results from step 4 and discuss how the rates has changed
@@ -447,11 +447,63 @@ The error rates are way higher which was to be expected. There will always be th
 
 # Assignment 3: Uncertainty Estimation
 
+## Blabla
 ```{r}
 
 set.seed(12345)
 
 ```
+
+```{r, echo = FALSE}
+statedata = read.csv("./State.csv", sep = ";")
+#creditscoring$good_bad = as.factor(creditscoring$good_bad)
+kable(head(statedata),
+      caption = "creditscoring.xls")
+
+```
+
+```{r, echo = FALSE}
+
+statedata$MET = as.numeric(statedata$MET) # Because R is shit.
+statedata = statedata[order(statedata$MET),] 
+ggplot(statedata, aes(x = MET, y = EX)) +
+  geom_point() + geom_smooth()
+
+```
+## Blabla
+
+
+```{r}
+c_tree = tree(EX ~ MET, data = statedata, control = tree.control(nobs = nrow(statedata), minsize = 8))
+cross_val_tree = cv.tree(c_tree)
+
+plot(cross_val_tree)
+
+c_pruned_tree = prune.tree(c_tree, best = 3)
+
+plot(c_pruned_tree)
+text(c_pruned_tree, pretty = 1)
+title("Optimal Tree")
+
+pruned_tree_prediction = predict(c_pruned_tree, newdata = statedata, type = "vector")
+
+pruned_tree_plot_dataframe = data.frame(statedata$MET, statedata$EX, pruned_tree_prediction,  abs(pruned_tree_prediction-statedata$EX))
+
+names(pruned_tree_plot_dataframe) = c("met", "orignal_ex", "predicted_ex", "residual")
+
+ggplot(pruned_tree_plot_dataframe) +
+  geom_point(aes(x = pruned_tree_plot_dataframe$met, y = pruned_tree_plot_dataframe$orignal_ex), color = "black") +
+  geom_point(aes(x = pruned_tree_plot_dataframe$met, y = pruned_tree_plot_dataframe$predicted_ex), color = "darkblue") +
+  geom_segment(mapping=aes(x=pruned_tree_plot_dataframe$met, y=pruned_tree_plot_dataframe$orignal_ex, xend=pruned_tree_plot_dataframe$met, yend=pruned_tree_plot_dataframe$predicted_ex), color = "red", linetype = "dotted")
+
+
+```
+
+```{r}
+hist(pruned_tree_plot_dataframe$residual, col="indianred1")
+```
+
+Chi Squared
 
 # Assignemnt 4: Principal Components
 

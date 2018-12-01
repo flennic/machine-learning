@@ -197,7 +197,7 @@ $$\pi_{k}^{ML} = pi = \frac{\sum_k p(z_{nk|x_n|\mu|\pi})}{N}$$
 And finally we use the following for calculating $\mu$. Note that the nominator of $\pi$ and the denominator of $\mu$ are the same.
 
 $$\mu_{k}^{ML} = mu = \frac{\pi_k p(z_{nk|x_n|\mu|\pi})}{\sum_k \pi_k p(z_{nk|x_n|\mu|\pi})}$$
-Voilà we're done, now the coding is actually just a few lines of code, you'll find it in the appendix.
+Voil? we're done, now the coding is actually just a few lines of code, you'll find it in the appendix.
 
 ## Execution
 
