@@ -248,15 +248,15 @@ print(error_optimalTree)
 
 The last value shows the misclassification error on the test data set.
 
-## Na?ve Bayes
+## Naive Bayes
 
 **Task: **
 
-- Use training data to perform classification using Na?ve Bayes.
+- Use training data to perform classification using Naive Bayes.
 - Report the confusion matrices and misclassification rates for the training and for the test data.
 - Compare the results with those from step 3.
 
-### Classification with Na?ve Bayes
+### Classification with Naive Bayes
 
 Let's train the model and have a look at the summary.
 
@@ -268,7 +268,7 @@ summary(naiveBayesModel)
 ```
 
 
-### Na?ve Bayes Confusion Matrices and Misclassification Rates
+### Naive Bayes Confusion Matrices and Misclassification Rates
 
 ```{r, echo = FALSE}
 
@@ -288,7 +288,7 @@ error_bayes_test =  1 - sum(diag(confusion_matrix_bayes_test)/
 
 ```
 
-Data for Na?ve Bayes on train:
+Data for Naive Bayes on train:
 
 ```{r, echo = FALSE}
 
@@ -297,7 +297,7 @@ print(error_bayes_train)
 
 ```
 
-Data for Na?ve Bayes on test:
+Data for Naive Bayes on test:
 
 ```{r, echo = FALSE}
 
@@ -308,7 +308,7 @@ print(error_bayes_test)
 
 ### Comparison with Step 3
 
-We can see that the misqualification rate for the optimized decision tree with ```0.2633333``` is better than the Na?ve Bayes approach with a rate of ```0.29```. We have to keep in mind that we first had to find the best tree and thus spend more time optimizing the hyper parameters.
+We can see that the misqualification rate for the optimized decision tree with ```0.2633333``` is better than the Naive Bayes approach with a rate of ```0.29```. We have to keep in mind that we first had to find the best tree and thus spend more time optimizing the hyper parameters.
 
 ## TPR, FPR and ROC Curves
 
@@ -364,7 +364,7 @@ kable(roc_values)
 
 **Task:** Plot the corresponding ROC curves.
 
-This is the ROC curve of the Optimized Tree and Na?ve Bayes.
+This is the ROC curve of the Optimized Tree and Naive Bayes.
 
 ```{r, echo = FALSE}
 
@@ -374,10 +374,10 @@ ggplot(roc_values) +
   geom_point(aes(x = fprs_tree, y = tprs_tree), colour = "orange") +
   
   geom_line(aes(x = fprs_bayes, y = tprs_bayes,
-                colour = "ROC Na?ve Bayes")) +
+                colour = "ROC Naive Bayes")) +
   geom_point(aes(x = fprs_bayes, y = tprs_bayes), colour = "blue") +
   
-  labs(title = "ROC for Optimized Tree and Na?ve Bayes", y = "TPR",
+  labs(title = "ROC for Optimized Tree and Naive Bayes", y = "TPR",
        x = "FPR", color = "Legend") +
   scale_color_manual(values = c("blue", "orange"))
 
@@ -385,13 +385,13 @@ ggplot(roc_values) +
 
 **Question:** Conclusion?
 
-**Answer:** The ROC (receiver operating characteristic) curve shows how the models behaves for different threshold values. The greater the area under the curve the better the model can distinguish between two classes. This is due to the fact that we have overlapping distributions, which in worst case, are exactly on top of each other, which would result in a line at the 45 degree angle. As the distributations shift apart, our models will get better on average. Here we can observe, that the Na?ve Bayes is in general better in distinguishing the two classes, the Optimized Tree mostly performs worse. We have to keep in mind that we have few datapoints for small FPR for the tree and that we've not spent any effort interpolating the line between those two points.
+**Answer:** The ROC (receiver operating characteristic) curve shows how the models behaves for different threshold values. The greater the area under the curve the better the model can distinguish between two classes. This is due to the fact that we have overlapping distributions, which in worst case, are exactly on top of each other, which would result in a line at the 45 degree angle. As the distributations shift apart, our models will get better on average. Here we can observe, that the Naive Bayes is in general better in distinguishing the two classes, the Optimized Tree mostly performs worse. We have to keep in mind that we have few datapoints for small FPR for the tree and that we've not spent any effort interpolating the line between those two points.
 
-## Na?ve Bayes Classification with Loss Matrix
+## Naive Bayes Classification with Loss Matrix
 
 **Task: **
 
-- Repeat Na?ve Bayes classification as it was in step 4 but use the following loss
+- Repeat Naive Bayes classification as it was in step 4 but use the following loss
 matrix.
 - Report the confusion matrix for the training and test data.
 - Compare the results with the results from step 4 and discuss how the rates has changed
@@ -468,7 +468,9 @@ kable(head(statedata),  caption = "State.csv")
 
 Let's plot the data:
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+
+set.seed(12345)
 
 statedata$MET = as.numeric(statedata$MET)
 statedata = statedata[order(statedata$MET),] 
@@ -489,6 +491,8 @@ At a first glance this data looks messy, but taking a second look gives the impr
 Let's create a Regression Tree Model and use Cross Validation to see which sizes is the best.
 
 ```{r, echo = FALSE}
+
+set.seed(12345)
 
 # Create the model
 reg_tree = tree(EX ~ MET, data = statedata, control =
@@ -545,7 +549,8 @@ And here we have the histrogram of the residusls.
 
 ```{r, echo = FALSE}
 
-hist(pruned_tree_plot_dataframe$residual, col="indianred1")
+hist(pruned_tree_plot_dataframe$residual,
+     col="indianred1", main = "Histogram of the Residuals", xlab = "Residuals")
 
 ```
 
@@ -587,21 +592,33 @@ res = boot(statedata, f_non_p_bootstrap, R = 1000)
 ci_non_p_bootstrap = envelope(res)
 ci_non_p_bootstrap_df = as.data.frame(t(ci_non_p_bootstrap$point))
 names(ci_non_p_bootstrap_df) = c("upper_bound", "lower_bound")
-pruned_tree_plot_dataframe = data.frame(pruned_tree_plot_dataframe, ci_non_p_bootstrap_df)
+pruned_tree_plot_dataframe =
+  data.frame(pruned_tree_plot_dataframe, ci_non_p_bootstrap_df)
 
 # Plot the data
 ggplot(pruned_tree_plot_dataframe) +
   geom_point(aes(x = pruned_tree_plot_dataframe$met,
                  y = pruned_tree_plot_dataframe$orignal_ex),
              color = "black") +
-  geom_ribbon(aes(x = pruned_tree_plot_dataframe$met, ymin = ci_non_p_bootstrap_df$lower_bound, ymax = ci_non_p_bootstrap_df$upper_bound), alpha = 0.4, fill = "indianred1", color = "red")
+  geom_ribbon(aes(x = pruned_tree_plot_dataframe$met,
+                  ymin = ci_non_p_bootstrap_df$lower_bound,
+                  ymax = ci_non_p_bootstrap_df$upper_bound),
+              alpha = 0.4, fill = "indianred1", color = "red") +
+    labs(title = "Confidence Bands (non-parametric)", y = "EX",
+       x = "MET", color = "Legend")
 
 ```
 
 The prediction interval is neither really smooth or bumby, it's somwhere in between.
-**EXPLANAITION NEEDED**.
+**TODO**.
 
 ## Confidence Bands (parametric)
+
+**Task:** 
+
+- Compute and plot the 95% confidence and prediction bands the regression tree
+model from step 2 by using a parametric bootstrap.
+- Consider the width of the confidence band and comment whether results of the regression model in step 2 seem to be reliable. Does it look like only 5% of data are outside the prediction band? Should it be?
 
 ```{r, echo = FALSE}
 
@@ -642,23 +659,87 @@ f_p_bootstrap = function(data) {
 }
 
 # Bootstrap
-res2 = boot(statedata, statistic = f_p_bootstrap, R=1000, mle=mle, ran.gen=rng, sim="parametric")
+res2 = boot(statedata,
+            statistic = f_p_bootstrap, R=1000, mle=mle,
+            ran.gen=rng, sim="parametric")
 
 # Confidence Bands using envolope
 ci_p_bootstrap = envelope(res2)
 ci_p_bootstrap_df = as.data.frame(t(ci_p_bootstrap$point))
 names(ci_p_bootstrap_df) = c("upper_bound", "lower_bound")
-pruned_tree_plot_dataframe_p = data.frame(pruned_tree_plot_dataframe, ci_p_bootstrap_df)
+pruned_tree_plot_dataframe_p =
+  data.frame(pruned_tree_plot_dataframe, ci_p_bootstrap_df)
 
 # Plot the data
 ggplot(pruned_tree_plot_dataframe_p) +
   geom_point(aes(x = pruned_tree_plot_dataframe_p$met,
                  y = pruned_tree_plot_dataframe_p$orignal_ex),
              color = "black") +
-  geom_ribbon(aes(x = pruned_tree_plot_dataframe_p$met, ymin = ci_p_bootstrap_df$lower_bound, ymax = ci_p_bootstrap_df$upper_bound), alpha = 0.4, fill = "indianred1", color = "red")
+  geom_ribbon(aes(x = pruned_tree_plot_dataframe_p$met,
+                  ymin = ci_p_bootstrap_df$lower_bound,
+                  ymax = ci_p_bootstrap_df$upper_bound),
+              alpha = 0.4, fill = "indianred1", color = "red") +
+    labs(title = "Confidence Bands (parametric)", y = "EX",
+       x = "MET", color = "Legend")
 
 ```
 
+```{r, echo = FALSE}
+
+# Prediction Bands
+
+# from slides
+f_p_bootstrap_pb = function(data) {
+  
+  # The index is not needed any more as we don't take a sub-sample
+  
+  # Now create a tree with the same hyperparameters from that subsample
+  tree_model = tree(EX ~ MET, data = data,
+                    control = tree.control(nrow(data), minsize = 8))
+  tree_model_pruned = prune.tree(tree_model, best = 3)
+  
+  # Use that model to predict on the real data
+  prediction = predict(tree_model_pruned, newdata = data)
+  
+  # Add the rnrom to the prediction
+  prediction_normal = rnorm(nrow(data), prediction, sd(summary(mle)$residual))
+  
+  return(prediction_normal)
+}
+
+# Bootstrap
+res3 = boot(statedata, statistic = f_p_bootstrap_pb,
+            R=1000, mle=mle, ran.gen=rng, sim="parametric")
+
+# Confidence Bands using envolope
+pb_p_bootstrap = envelope(res2)
+pb_p_bootstrap_df = as.data.frame(t(pb_p_bootstrap$point))
+names(pb_p_bootstrap_df) = c("upper_bound", "lower_bound")
+pruned_tree_plot_dataframe_p_pb =
+  data.frame(pruned_tree_plot_dataframe, pb_p_bootstrap_df)
+
+# Plot the data
+ggplot(pruned_tree_plot_dataframe_p_pb) +
+  geom_point(aes(x = pruned_tree_plot_dataframe_p_pb$met,
+                 y = pruned_tree_plot_dataframe_p_pb$orignal_ex),
+             color = "black") +
+  geom_ribbon(aes(x = pruned_tree_plot_dataframe_p_pb$met,
+                  ymin = pb_p_bootstrap_df$lower_bound,
+                  ymax = pb_p_bootstrap_df$upper_bound), alpha = 0.4,
+              fill = "indianred1", color = "red") +
+    labs(title = "Prediction Bands (parametric)", y = "EX",
+       x = "MET", color = "Legend")
+
+```
+
+**Comment: ** **TODO**
+
+## Conclusions
+
+**Task: ** Consider the histogram of residuals from step 2 and suggest what kind of
+bootstrap is actually more appropriate here.
+
+**Answer: ** **TODO**
 
 
 # Assignemnt 4: Principal Components
