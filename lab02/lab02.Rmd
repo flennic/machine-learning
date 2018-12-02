@@ -20,6 +20,7 @@ library(ggplot2)
 library(readxl)
 library(tree)
 library(e1071)
+library(boot)
 ```
 
 # Assignment 2: Analysis of Credit Scoring
@@ -447,63 +448,218 @@ The error rates are way higher which was to be expected. There will always be th
 
 # Assignment 3: Uncertainty Estimation
 
-## Blabla
-```{r}
+## Import and Plot ```State.csv```
+
+**Task: **
+
+- Reorder your data with respect to the increase of MET and plot EX versus MET.
+- Discuss what kind of model can be appropriate here.
+
+Let's import the data and have a look at it:
+
+```{r, echo = FALSE}
 
 set.seed(12345)
 
-```
-
-```{r, echo = FALSE}
 statedata = read.csv("./State.csv", sep = ";")
-#creditscoring$good_bad = as.factor(creditscoring$good_bad)
-kable(head(statedata),
-      caption = "creditscoring.xls")
+kable(head(statedata),  caption = "State.csv")
 
 ```
+
+Let's plot the data:
 
 ```{r, echo = FALSE}
 
-statedata$MET = as.numeric(statedata$MET) # Because R is shit.
+statedata$MET = as.numeric(statedata$MET)
 statedata = statedata[order(statedata$MET),] 
-ggplot(statedata, aes(x = MET, y = EX)) +
-  geom_point() + geom_smooth()
+ggplot(statedata, aes(x = MET, y = EX)) +  geom_point() + geom_smooth()
 
 ```
-## Blabla
 
+At a first glance this data looks messy, but taking a second look gives the impression that the data has different kind of levels. Therefor a Regression Tree would probably be a good model.
 
-```{r}
-c_tree = tree(EX ~ MET, data = statedata, control = tree.control(nobs = nrow(statedata), minsize = 8))
-cross_val_tree = cv.tree(c_tree)
+## Regression Tree Model
 
-plot(cross_val_tree)
+**Task:**
 
-c_pruned_tree = prune.tree(c_tree, best = 3)
+- Report the selected tree.
+- Plot the original and the fitted data and histogram of residuals.
+- Comment on the distribution of the residuals and the quality of the fit.
 
-plot(c_pruned_tree)
-text(c_pruned_tree, pretty = 1)
-title("Optimal Tree")
+Let's create a Regression Tree Model and use Cross Validation to see which sizes is the best.
 
-pruned_tree_prediction = predict(c_pruned_tree, newdata = statedata, type = "vector")
+```{r, echo = FALSE}
 
-pruned_tree_plot_dataframe = data.frame(statedata$MET, statedata$EX, pruned_tree_prediction,  abs(pruned_tree_prediction-statedata$EX))
+# Create the model
+reg_tree = tree(EX ~ MET, data = statedata, control =
+                  tree.control(nobs = nrow(statedata), minsize = 8))
 
+# Use cross validation
+cross_val_reg_tree = cv.tree(reg_tree)
+
+# Plot the deviance of the sizes
+plot(cross_val_reg_tree)
+
+```
+
+We see that 3 or 4 would work for the size of the tree. For the following we will declare ```best = 3```.
+Let's prune our best tree and have a look at it.
+
+```{r, echo = FALSE}
+
+# Let's create the pruned the with best set to 3 and get it's prediction
+pruned_tree = prune.tree(reg_tree, best = 3)
+pruned_tree_prediction = predict(pruned_tree, newdata = statedata, type = "vector")
+
+# We create a data.frame to save our values to make it easier to plot the data
+pruned_tree_plot_dataframe =
+  data.frame(statedata$MET, statedata$EX, pruned_tree_prediction,
+             abs(pruned_tree_prediction-statedata$EX))
 names(pruned_tree_plot_dataframe) = c("met", "orignal_ex", "predicted_ex", "residual")
 
+# Lets first plot the pruned tree
+plot(pruned_tree)
+text(pruned_tree, pretty = 1)
+title("Optimal Tree with best = 3")
+
+# Lets create a plot with the real and predictes values and highlight the
+# residuals
 ggplot(pruned_tree_plot_dataframe) +
-  geom_point(aes(x = pruned_tree_plot_dataframe$met, y = pruned_tree_plot_dataframe$orignal_ex), color = "black") +
-  geom_point(aes(x = pruned_tree_plot_dataframe$met, y = pruned_tree_plot_dataframe$predicted_ex), color = "darkblue") +
-  geom_segment(mapping=aes(x=pruned_tree_plot_dataframe$met, y=pruned_tree_plot_dataframe$orignal_ex, xend=pruned_tree_plot_dataframe$met, yend=pruned_tree_plot_dataframe$predicted_ex), color = "red", linetype = "dotted")
-
+  geom_point(aes(x = pruned_tree_plot_dataframe$met,
+                 y = pruned_tree_plot_dataframe$orignal_ex),
+             color = "black") +
+  geom_point(aes(x = pruned_tree_plot_dataframe$met,
+                 y = pruned_tree_plot_dataframe$predicted_ex),
+             color = "darkblue") +
+  geom_segment(mapping=aes(x=pruned_tree_plot_dataframe$met,
+                           y=pruned_tree_plot_dataframe$orignal_ex,
+                           xend=pruned_tree_plot_dataframe$met,
+                           yend=pruned_tree_plot_dataframe$predicted_ex),
+               color = "red", linetype = "dotted") +
+  labs(title = "Original Data, Fitted Data and Residuals", y = "EX",
+       x = "MET", color = "Legend")
 
 ```
 
-```{r}
+And here we have the histrogram of the residusls.
+
+```{r, echo = FALSE}
+
 hist(pruned_tree_plot_dataframe$residual, col="indianred1")
+
 ```
 
-Chi Squared
+
+The histogramm looks like a Chi-Squared distribution with ```k ~ 3```.
+
+## Confidence Bands (non-parametric)
+
+**Task:**
+
+- Compute and plot the 95% confidence bands for the regression tree model from step 2 by using a non-parametric bootstrap.
+- Comment whether the band is smooth or bumpy and try to explain why.
+- Consider the width of the confidence band and comment whether results of the regression model in
+step 2 seem to be reliable.
+
+```{r, echo = FALSE}
+
+# We take the function given from the slides and adjust to the tree
+# computing bootstrap samples
+f_non_p_bootstrap = function(data, ind) {
+  
+  # First take the subsample
+  data1 = data[ind,]
+  
+  # Now create a tree with the same hyperparameters from that subsample
+  tree_model = tree(EX ~ MET, data = data1,
+                    control = tree.control(nrow(data),minsize = 8))
+  tree_model_pruned = prune.tree(tree_model, best = 3)
+  
+  # Use that model to predict on the real data
+  prediction = predict(tree_model_pruned, newdata = data)
+  return(prediction)
+}
+
+# Lets create the Bootstrap (again taken from slides)
+res = boot(statedata, f_non_p_bootstrap, R = 1000)
+
+# Confidence Bands using envolope
+ci_non_p_bootstrap = envelope(res)
+ci_non_p_bootstrap_df = as.data.frame(t(ci_non_p_bootstrap$point))
+names(ci_non_p_bootstrap_df) = c("upper_bound", "lower_bound")
+pruned_tree_plot_dataframe = data.frame(pruned_tree_plot_dataframe, ci_non_p_bootstrap_df)
+
+# Plot the data
+ggplot(pruned_tree_plot_dataframe) +
+  geom_point(aes(x = pruned_tree_plot_dataframe$met,
+                 y = pruned_tree_plot_dataframe$orignal_ex),
+             color = "black") +
+  geom_ribbon(aes(x = pruned_tree_plot_dataframe$met, ymin = ci_non_p_bootstrap_df$lower_bound, ymax = ci_non_p_bootstrap_df$upper_bound), alpha = 0.4, fill = "indianred1", color = "red")
+
+```
+
+The prediction interval is neither really smooth or bumby, it's somwhere in between.
+**EXPLANAITION NEEDED**.
+
+## Confidence Bands (parametric)
+
+```{r, echo = FALSE}
+
+# Again we take the sample from the slides and adjust it to our needs
+# 1) Compute value mle
+# 2) Write function ran.gen that depends on data and mle and which generates
+# new data
+# 3) Write function statistic that depend on data which will be generated by
+# ran.gen and should return the estimator
+
+## 1)
+mle = pruned_tree
+
+## 2)
+rng = function(data, mle) {
+  data1 = data.frame(EX=data$EX, MET=data$MET)
+  n = length(data$EX)
+  #generate new Price
+  # summary needed to access the residuals
+  data1$EX = rnorm(n, predict(mle, newdata=data1), sd(summary(mle)$residuals))
+  return(data1)
+}
+
+## 3) f_non_p_bootstrap+ distribution N
+f_p_bootstrap = function(data) {
+  
+  # The index is not needed any more as we don't take a sub-sample
+  
+  # Now create a tree with the same hyperparameters from that subsample
+  tree_model = tree(EX ~ MET, data = data,
+                    control = tree.control(nrow(data), minsize = 8))
+  tree_model_pruned = prune.tree(tree_model, best = 3)
+  
+  # Use that model to predict on the real data
+  prediction = predict(tree_model_pruned, newdata = data)
+  
+  return(prediction)
+}
+
+# Bootstrap
+res2 = boot(statedata, statistic = f_p_bootstrap, R=1000, mle=mle, ran.gen=rng, sim="parametric")
+
+# Confidence Bands using envolope
+ci_p_bootstrap = envelope(res2)
+ci_p_bootstrap_df = as.data.frame(t(ci_p_bootstrap$point))
+names(ci_p_bootstrap_df) = c("upper_bound", "lower_bound")
+pruned_tree_plot_dataframe_p = data.frame(pruned_tree_plot_dataframe, ci_p_bootstrap_df)
+
+# Plot the data
+ggplot(pruned_tree_plot_dataframe_p) +
+  geom_point(aes(x = pruned_tree_plot_dataframe_p$met,
+                 y = pruned_tree_plot_dataframe_p$orignal_ex),
+             color = "black") +
+  geom_ribbon(aes(x = pruned_tree_plot_dataframe_p$met, ymin = ci_p_bootstrap_df$lower_bound, ymax = ci_p_bootstrap_df$upper_bound), alpha = 0.4, fill = "indianred1", color = "red")
+
+```
+
+
 
 # Assignemnt 4: Principal Components
 
