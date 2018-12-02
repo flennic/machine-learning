@@ -168,7 +168,7 @@ $Z$ holds the probability for each set of $X$ (row in $X$) to belong to each $K_
 
 Let's have a look at the mathematical equations and how we can derive our formulas for the matrix multiplication from that. Formulas without a source are either taken from the lecture slides or derived by previous formulas.
 
-The first step is to calculate $Z$. We will divide that in first calculating $Bx$ which contains $Bernoulli(x|\mu_k)$ and afterwards calculating $p(x)$ which we can use to calculate $Z$. The formulas will have (left side) will be assigned to a letter which you will find in the source code.
+The first step is to calculate $Z$. We will divide that in first calculating $Bx$ which contains $Bernoulli(x|\mu_k)$ and afterwards calculating $p(x)$ which we can use to calculate $Z$. The formulas (left side) will be assigned to a letter which you will find in the source code.
 
 
 $$Bernoulli(x|\mu_k) = B_x = \prod_{i} \mu^{x_i}_{k_i} (1 - \mu_{k_i})^{1-x_i}$$
@@ -232,7 +232,6 @@ for(n in 1:N) {
     x[n,d] = rbinom(1,1,true_mu[k,d])
   }
 }
-
 
 plot(true_mu[1,], type="o", col="blue", ylim=c(0,1))
 points(true_mu[2,], type="o", col="red")

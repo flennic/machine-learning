@@ -21,6 +21,7 @@ library(readxl)
 library(tree)
 library(e1071)
 library(boot)
+library(fastICA)
 ```
 
 # Assignment 2: Analysis of Credit Scoring
@@ -416,8 +417,12 @@ prediction_bayes_train_raw =
 prediction_bayes_test_raw =
   predict(naiveBayesModel, newdata = test, type = "raw")
 
-confusion_matrix_bayes_train = table(prediction_bayes_train_raw[,1]/prediction_bayes_train_raw[,2] > 10, train$good_bad)
-confusion_matrix_bayes_test = table(prediction_bayes_test_raw[,1]/prediction_bayes_test_raw[,2] > 10, test$good_bad)
+confusion_matrix_bayes_train =
+  table(prediction_bayes_train_raw[,1]/
+          prediction_bayes_train_raw[,2] > 10, train$good_bad)
+confusion_matrix_bayes_test =
+  table(prediction_bayes_test_raw[,1]/
+          prediction_bayes_test_raw[,2] > 10, test$good_bad)
 
 error_bayes_train_raw = 1 - sum(diag(confusion_matrix_bayes_train)/
                               sum(confusion_matrix_bayes_train))
@@ -539,7 +544,7 @@ ggplot(pruned_tree_plot_dataframe) +
 
 ```
 
-And here we have the histrogram of the residusls.
+And here we have the histrogram of the residuals.
 
 ```{r, echo = FALSE}
 
@@ -582,7 +587,7 @@ f_non_p_bootstrap = function(data, ind) {
 # Lets create the Bootstrap (again taken from slides)
 res = boot(statedata, f_non_p_bootstrap, R = 1000)
 
-# Confidence Bands using envolope
+# Confidence Bands using envelope
 ci_non_p_bootstrap = envelope(res)
 ci_non_p_bootstrap_df = as.data.frame(t(ci_non_p_bootstrap$point))
 names(ci_non_p_bootstrap_df) = c("upper_bound", "lower_bound")
@@ -738,11 +743,110 @@ bootstrap is actually more appropriate here.
 
 # Assignemnt 4: Principal Components
 
-```{r}
+## Principal Component Analysis
+
+**Task: **
+
+- Conduct a standard PCA by using the feature space and provide a plot
+explaining how much variation is explained by each feature.
+- Does the plot show how many PC should be extracted?
+- Select the minimal number of components explaining at least 99% of the total variance.
+- Provide also a plot of the scores in the coordinates (PC1, PC2).
+- Are there unusual diesel fuels according to this plot?
+
+Let's import the data and have a look at it.
+
+```{r, echo = FALSE}
+
+set.seed(12345)
+nir_spectra = read.csv2("./NIRspectra.csv")
+kable(head(statedata),  caption = "NIRspectra.csv")
+
+```
+
+```{r, echo = FALSE}
+
+# Copy to not modify the original dataset
+nir_spectra_copy = nir_spectra
+nir_spectra_copy$Viscosity = c()
+
+# PCA
+res = prcomp(nir_spectra_copy)
+
+# Eigenvalues
+lambda = res$sdev^2
+
+# Proportion of variation
+kable(head(sprintf("%2.3f",lambda/sum(lambda)*100)), caption = "Variance for each Feature")
+
+# Plot
+screeplot(res, main = "Variances for each Feature")
+
+```
+
+As we can see from the plot and the table, the first feature is responsible for ```93.332%``` of the variance and the second feature for ```6.262%```. Together those two make of of ```99.594%``` of the variance.
+
+Let's have a look at the plot for PC1 and PC2.
+
+```{r, echo = FALSE}
+
+ggplot(as.data.frame(res$x)) +
+  geom_point(aes(x = res$x[,1],
+                 y = res$x[,2]),
+             color = "indianred1") +
+    labs(title = "PV1 vs. PC2", y = "PC2",
+       x = "PC1", color = "Legend")
+
+```
+
+**TODO**
+
+## Trace Plots
+
+Make trace plots of the loadings of the components selected in step 1. Is there
+any principle component that is explained by mainly a few original features?
+
+```{r, echo = FALSE}
+
+U = res$rotation
+plot(U[,1], main = "Traceplot, PC1")
+plot(U[,2], main = "Traceplot, PC2")
+
+```
+
+## ICA
+
+- Perform Independent Component Analysis with the number of components selected in step 1.
+- Compute W' = K * W
+- Present the columns of W' in form of the trace plots.
+- Compare with the trace plots in step 2 and make conclusions. What kind of measure is represented by the matrix W'?
+- Make a plot of the scores of the first two latent features and compare it with the score plot from step 1.
+
+```{r, echo = FALSE}
 
 set.seed(12345)
 
+ica_model = fastICA(X = nir_spectra_copy, n.comp = 2, alg.typ = "parallel",
+                    fun = "logcosh", alpha = 1, method = "R", row.norm = FALSE,
+                    maxit = 200, tol = 0.0001, verbose = FALSE)
+
+W_dash = ica_model$K %*% ica_model$W
+
+plot(W_dash[,1], main= "Column 1")
+plot(W_dash[,2], main= "Column 2")
+
+
+ggplot(as.data.frame(W_dash)) +
+  geom_point(aes(x = W_dash[,1],
+                 y = W_dash[,2]),
+             color = "indianred1") +
+    labs(title = "Feature 1 vs Feature 2", y = "Feature 2",
+       x = "Feature 1", color = "Legend")
+
 ```
+
+**Conclusion: ** **TODO**
+
 
 # Appendix: Source Code
 
