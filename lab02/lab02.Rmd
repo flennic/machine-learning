@@ -168,10 +168,10 @@ print(error_rate_gini)
 ```{r, echo = FALSE}
 
 # Taken from the slides
-trainScore = rep(0, 9)
-testScore = rep(0, 9)
+trainScore = rep(0, 15)
+testScore = rep(0, 15)
 
-for(i in 2:9) {
+for(i in 2:15) {
   prunedTree = prune.tree(decisionTree_deviance, best = i)
   pred = predict(prunedTree, newdata = valid, type = "tree")
   trainScore[i] = deviance(prunedTree)
@@ -180,13 +180,13 @@ for(i in 2:9) {
 
 ```
 
-The best tree is the tree with index ```5``` and a test score of ```350.952```.
+The best tree's index and deviance.
 
 ```{r, echo = FALSE}
 
-## Add one as the trim the first index
-optimalTreeIdx = which.min(testScore[-1]) + 1
-optimalTreeScore = min(testScore[-1])
+## Add one as we trim the first index
+optimalTreeIdx = which.max(testScore[-1]) + 1
+optimalTreeScore = max(testScore[-1])
 
 print(optimalTreeIdx)
 print(optimalTreeScore)
@@ -199,10 +199,10 @@ The following plot shows the number of leaves vs the deviance. The orange line i
 
 ```{r, echo = FALSE}
 
-plot(2:9, trainScore[2:9], type = "b", col = "orange", ylim = c(300,500),
+plot(2:15, trainScore[2:15], type = "b", col = "orange", ylim = c(250,650),
      main = "Tree Depth vs Training/Test Score", ylab = "Deviance",
      xlab = "Number of Leaves")
-points(2:9, testScore[2:9], type = "b", col = "blue")
+points(2:15, testScore[2:15], type = "b", col = "blue")
 legend("topright", legend = c("Train (orange)", "Test (blue)"))
 
 ```
