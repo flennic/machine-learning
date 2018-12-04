@@ -309,7 +309,7 @@ print(error_bayes_test)
 
 ### Comparison with Step 3
 
-We can see that the misqualification rate for the optimized decision tree with ```0.2633333``` is better than the Naive Bayes approach with a rate of ```0.29```. We have to keep in mind that we first had to find the best tree and thus spend more time optimizing the hyper parameters.
+We can see that the misqualification rate for the optimized decision tree is better than the Naive Bayes approach. We have to keep in mind that we first had to find the best tree and thus spend more time optimizing the hyper parameters.
 
 ## TPR, FPR and ROC Curves
 
@@ -338,7 +338,7 @@ for (i in pi) {
   
   # FPR = FP / N-
   # TPR = TP / N+
-  fprs_tree =c(fprs_tree, current_tree_pi_confusion[1,1]/
+  fprs_tree = c(fprs_tree, current_tree_pi_confusion[1,1]/
                  sum(current_tree_pi_confusion[1,]))
   tprs_tree = c(tprs_tree, current_tree_pi_confusion[2,1]/
                   sum(current_tree_pi_confusion[2,]))
@@ -377,6 +377,8 @@ ggplot(roc_values) +
   geom_line(aes(x = fprs_bayes, y = tprs_bayes,
                 colour = "ROC Naive Bayes")) +
   geom_point(aes(x = fprs_bayes, y = tprs_bayes), colour = "blue") +
+  
+  geom_abline(slope=1, intercept=0, linetype="dotted") + 
   
   labs(title = "ROC for Optimized Tree and Naive Bayes", y = "TPR",
        x = "FPR", color = "Legend") +
@@ -418,11 +420,11 @@ prediction_bayes_test_raw =
   predict(naiveBayesModel, newdata = test, type = "raw")
 
 confusion_matrix_bayes_train =
-  table(prediction_bayes_train_raw[,1]/
-          prediction_bayes_train_raw[,2] > 10, train$good_bad)
+  table(prediction_bayes_train_raw[,2]/
+          prediction_bayes_train_raw[,1] > 10, train$good_bad)
 confusion_matrix_bayes_test =
-  table(prediction_bayes_test_raw[,1]/
-          prediction_bayes_test_raw[,2] > 10, test$good_bad)
+  table(prediction_bayes_test_raw[,2]/
+          prediction_bayes_test_raw[,1] > 10, test$good_bad)
 
 error_bayes_train_raw = 1 - sum(diag(confusion_matrix_bayes_train)/
                               sum(confusion_matrix_bayes_train))
@@ -449,7 +451,7 @@ print(error_bayes_test_raw)
 
 ```
 
-The error rates are way higher which was to be expected. There will always be the $\alpha$ and $\beta$ error. Choosing a loss matrix or setting a threshold for the classification will have influence on these errors. While making one of these errors small, the other one gets larger (with peaks where you classify everyhting as TRUE or FALSE). Here we defined that the confidence for being bad must be at least ten times larger than for being good which concludes in the results we've calculated and a high error rate. We have a really low false positive rate (with just 14 out of 286 being missclassified) in contrast to a high false negative rate (21 out of 35 being missclassified).
+The error rates are way higher which was to be expected. There will always be the $\alpha$ and $\beta$ error. Choosing a loss matrix or setting a threshold for the classification will have influence on these errors. While making one of these errors small, the other one gets larger (with peaks where you classify everyhting as TRUE or FALSE). Here we defined that the confidence for being bad must be at least ten times larger than for being good which concludes in the results we've calculated and a high error rate.
 
 # Assignment 3: Uncertainty Estimation
 
@@ -711,7 +713,7 @@ res3 = boot(statedata, statistic = f_p_bootstrap_pb,
             R=1000, mle=mle, ran.gen=rng, sim="parametric")
 
 # Confidence Bands using envolope
-pb_p_bootstrap = envelope(res2)
+pb_p_bootstrap = envelope(res3)
 pb_p_bootstrap_df = as.data.frame(t(pb_p_bootstrap$point))
 names(pb_p_bootstrap_df) = c("upper_bound", "lower_bound")
 pruned_tree_plot_dataframe_p_pb =
@@ -794,7 +796,7 @@ ggplot(as.data.frame(res$x)) +
   geom_point(aes(x = res$x[,1],
                  y = res$x[,2]),
              color = "indianred1") +
-    labs(title = "PV1 vs. PC2", y = "PC2",
+    labs(title = "PC1 vs. PC2", y = "PC2",
        x = "PC1", color = "Legend")
 
 ```
@@ -834,7 +836,6 @@ W_dash = ica_model$K %*% ica_model$W
 
 plot(W_dash[,1], main= "Column 1")
 plot(W_dash[,2], main= "Column 2")
-
 
 ggplot(as.data.frame(W_dash)) +
   geom_point(aes(x = W_dash[,1],
