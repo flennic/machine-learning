@@ -185,8 +185,8 @@ The best tree's index and deviance.
 ```{r, echo = FALSE}
 
 ## Add one as we trim the first index
-optimalTreeIdx = which.max(testScore[-1]) + 1
-optimalTreeScore = max(testScore[-1])
+optimalTreeIdx = which.min(testScore[-1]) + 1
+optimalTreeScore = min(testScore[-1])
 
 print(optimalTreeIdx)
 print(optimalTreeScore)

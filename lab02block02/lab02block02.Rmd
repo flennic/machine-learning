@@ -1,0 +1,153 @@
+---
+title: "Computer lab 2 block 2"
+author: "Maximilian Pfundstein (maxpf364)"
+date: "4 December 2018"
+output:
+  html_document:
+    df_print: paged
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: 3
+  word_document:
+    toc: yes
+    toc_depth: '3'
+bibliography: sources.bib
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+library(readxl)
+library(ggplot2)
+library(knitr)
+library(mgcv)
+set.seed(1234567890)
+
+```
+
+# 1) Using GAM and GLM to examine the mortality rates
+
+The Excel document influenza.xlsx contains weekly data on the mortality and the number of laboratory-confirmed cases of influenza in Sweden. In addition, there is information about population-weighted temperature anomalies (temperature deficits).
+
+```{r, echo=FALSE}
+
+################################################################################
+# 1) Using GAM and GLM to examine the mortality rates
+################################################################################
+
+set.seed(12345)
+influanza = read_excel("./influenza.xlsx")
+#creditscoring$good_bad = as.factor(creditscoring$good_bad)
+kable(head(influanza), caption = "influenza.xlsx")
+
+```
+
+## 1.1)
+
+**Task:** Use time series plots to visually inspect how the mortality and influenza number vary with time (use Time as X axis). By using this plot, comment how the amounts of influenza cases are related to mortality rates.
+
+**Answer:** One plot for mortality and one for influenza. To better compare those two and show, if they are related or not, there is a third plot showing them in one plot.
+
+```{r, echo=FALSE}
+
+################################################################################
+# 1.1) 
+################################################################################
+
+ggplot(influanza) +
+  geom_line(aes(x = influanza$Time, y = influanza$Mortality,
+                colour = "Mortality Time Series")) +
+  labs(title = "Mortality", y = "Mortality",
+       x = "Time", color = "Legend") +
+  scale_color_manual(values = c("blue"))
+
+
+ggplot(influanza) +
+  geom_line(aes(x = influanza$Time, y = influanza$Influenza,
+                colour = "Influenza Time Series")) +
+  labs(title = "Influenza", y = "Influenza",
+       x = "Time", color = "Legend") +
+  scale_color_manual(values = c("orange"))
+
+ggplot(influanza) +
+  geom_line(aes(x = influanza$Time, y = influanza$Mortality,
+                colour = "Mortality Time Series")) +
+  geom_line(aes(x = influanza$Time, y = influanza$Influenza,
+                colour = "Influenza Time Series")) +
+  labs(title = "Superimposed Time Series", y = "Values",
+       x = "Time", color = "Legend") +
+  scale_color_manual(values = c("red", "brown"))
+```
+
+If both plots are superimposed we can observe that it seems like that mortality in influenced by influenza.
+
+## 1.2)
+
+**Task:** Use gam() function from mgcv package to fit a GAM model in which Mortality is normally distributed and modelled as a linear function of Year and spline function of Week, and make sure that the model parameters are selected by the generalized cross-validation. Report the underlying probabilistic model.
+
+```{r, echo = FALSE}
+
+################################################################################
+# 1.2) 
+################################################################################
+
+gam_model = gam(formula = Mortality ~ Influenza, family = gaussian()) 
+
+```
+
+
+## 1.3)
+
+**Task:** Plot predicted and observed mortality against time for the fitted model and comment on the quality of the fit. Investigate the output of the GAM model and report which terms appear to be significant in the model. Is there a trend in mortality change from one year to another? Plot the spline component and interpret the plot.
+
+## 1.4)
+
+**Task:** Examine how the penalty factor of the spline function in the GAM model from step 2 influences the estimated deviance of the model. Make plots of the predicted and observed mortality against time for cases of very high and very low penalty factors. What is the relation of the penalty factor to the degrees of freedom? Do your results confirm this relationship?
+
+## 1.5)
+
+**Task:** Use the model obtained in step 2 and plot the residuals and the influenza values against time (in one plot). Is the temporal pattern in the residuals correlated to the outbreaks of influenza?
+
+## 1.6)
+
+**Task:** Fit a GAM model in R in which mortality is be modelled as an additive function of the spline functions of year, week, and the number of confirmed cases of influenza. Use the output of this GAM function to conclude whether or not the mortality is influenced by the outbreaks of influenza. Provide the plot of the original and fitted Mortality against Time and comment whether the model seems to be better than the previous GAM models.
+
+# 2) High-dimensional method
+
+The data file data.csv contains information about 64 e-mails which were manually collected from DBWorld mailing list. They were classified as: 'announces of conferences' (1) and 'everything else' (0) (variable Conference)
+
+## 2.1)
+
+Divide data into training and test sets (70/30) without scaling. Perform nearest shrunken centroid classification of training data in which the threshold is chosen by cross-validation. Provide a centroid plot and interpret it. How many features were selected by the method? List the names of the 10 most contributing features and comment whether it is reasonable that they have strong effect on the discrimination between the conference mails and other mails? Report the test error.
+
+## 2.2)
+
+Compute the test error and the number of the contributing features for the following methods fitted to the training data:
+
+  - Elastic net with the binomial response and a = 0.5 in which penalty is selected by the cross-validation
+  - Support vector machine with “vanilladot” kernel.
+  
+Compare the results of these models with the results of the nearest shrunken centroids (make a comparative table). Which model would you prefer and why?
+
+## 2.3)
+
+Implement Benjamini-Hochberg method for the original data, and use t.test() for computing p-values. Which features correspond to the rejected hypotheses? Interpret the result.
+
+```{r, echo = FALSE}
+
+################################################################################
+# 2) High-dimensional method
+################################################################################
+
+
+```
+
+
+
+# Appendix
+
+```{r, ref.label = knitr::all_labels(), echo = TRUE, eval = FALSE}
+```
+
+# Bibliography
