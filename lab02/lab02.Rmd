@@ -3,13 +3,13 @@ title: "Machine Learning Lab 02"
 author: "Maximilian Pfundstein (maxpf364)"
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
-    toc: true
-    toc_depth: 3
-    number_sections: true
   html_document:
     df_print: paged
     toc_float: true
+    number_sections: true
+  pdf_document:
+    toc: true
+    toc_depth: 3
     number_sections: true
 ---
 
@@ -44,12 +44,12 @@ kable(head(creditscoring[,(ncol(creditscoring)-10):ncol(creditscoring)]),
 
 n=dim(creditscoring)[1]
 set.seed(12345)
-id=sample(1:n, floor(n*0.4))
+id=sample(1:n, floor(n*0.5))
 train=creditscoring[id,]
 
 id1=setdiff(1:n, id)
 set.seed(12345)
-id2=sample(id1, floor(n*0.3))
+id2=sample(id1, floor(n*0.25))
 
 valid=creditscoring[id2,]
 id3=setdiff(id1,id2)
@@ -195,11 +195,11 @@ print(optimalTreeScore)
 
 ### Dependency of Deviances
 
-The following plots shows the Tree Depth vs the Training Score. The orange line indicates the training and the blue line the test score.
+The following plot shows the number of leaves vs the deviance. The orange line indicates the training and the blue line the test deviance.
 
 ```{r, echo = FALSE}
 
-plot(2:9, trainScore[2:9], type = "b", col = "orange", ylim = c(325,475),
+plot(2:9, trainScore[2:9], type = "b", col = "orange", ylim = c(300,500),
      main = "Tree Depth vs Training/Test Score", ylab = "Deviance",
      xlab = "Number of Leaves")
 points(2:9, testScore[2:9], type = "b", col = "blue")
