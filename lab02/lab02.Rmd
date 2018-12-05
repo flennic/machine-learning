@@ -32,6 +32,10 @@ Let's import the data and have a look at it.
 
 ```{r, echo = FALSE}
 
+################################################################################
+# Assignment 2: Analysis of Credit Scoring
+################################################################################
+
 set.seed(12345)
 creditscoring = read_excel("./creditscoring.xls")
 creditscoring$good_bad = as.factor(creditscoring$good_bad)
@@ -466,6 +470,10 @@ Let's import the data and have a look at it:
 
 ```{r, echo = FALSE}
 
+################################################################################
+# Assignment 3: Uncertainty Estimation
+################################################################################
+
 statedata = read.csv("./State.csv", sep = ";")
 kable(head(statedata),  caption = "State.csv")
 
@@ -643,7 +651,7 @@ rng = function(data, mle) {
   return(data1)
 }
 
-## 3) f_non_p_bootstrap+ distribution N
+## 3) f_non_p_bootstrap + distribution N
 f_p_bootstrap = function(data) {
   
   # The index is not needed any more as we don't take a sub-sample
@@ -685,7 +693,7 @@ ggplot(pruned_tree_plot_dataframe_p) +
 
 ```
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
 
 # Prediction Bands
 
@@ -733,7 +741,7 @@ ggplot(pruned_tree_plot_dataframe_p_pb) +
 
 ```
 
-**Comment: ** **TODO**
+**Comment: ** The confidence intervall is shallow. It is showing us, for which original data points we have a confidence of 95% that we classified is correctly, which makes sense, as we used the tree generated previously as a statistic. For the prediction band we can see that basically just one data point is not inside of the band. We have therefor 1 out of 48 datapoints outside of our prediction band, which is around 2.1%. I'd have expected it to be two or three, but I think one is still feasible.
 
 ## Conclusions
 
@@ -759,6 +767,10 @@ explaining how much variation is explained by each feature.
 Let's import the data and have a look at it.
 
 ```{r, echo = FALSE}
+
+################################################################################
+# Assignment 4: Principal Components
+################################################################################
 
 set.seed(12345)
 nir_spectra = read.csv2("./NIRspectra.csv")
@@ -801,11 +813,11 @@ ggplot(as.data.frame(res$x)) +
 
 ```
 
-**TODO**
+We can see that there are some datapoints which are far away from the others, but just two of them are really far away, their PC1 values are greater than ```1.0```, even nearly around ```1.5``` for one.
 
 ## Trace Plots
 
-Make trace plots of the loadings of the components selected in step 1. Is there
+**Task:** Make trace plots of the loadings of the components selected in step 1. Is there
 any principle component that is explained by mainly a few original features?
 
 ```{r, echo = FALSE}
@@ -815,6 +827,8 @@ plot(U[,1], main = "Traceplot, PC1")
 plot(U[,2], main = "Traceplot, PC2")
 
 ```
+
+**TODO:** Add explanation!
 
 ## ICA
 

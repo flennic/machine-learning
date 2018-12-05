@@ -92,7 +92,7 @@ If both plots are superimposed we can observe that it seems like that mortality 
 # 1.2) 
 ################################################################################
 
-gam_model = gam(formula = Mortality ~ Influenza, family = gaussian()) 
+#gam_model = gam(formula = Mortality ~ Influenza, family = gaussian()) 
 
 ```
 
@@ -117,9 +117,36 @@ gam_model = gam(formula = Mortality ~ Influenza, family = gaussian())
 
 The data file data.csv contains information about 64 e-mails which were manually collected from DBWorld mailing list. They were classified as: 'announces of conferences' (1) and 'everything else' (0) (variable Conference)
 
+```{r, echo = FALSE}
+
+################################################################################
+# 2) High-dimensional method
+################################################################################
+
+emails = read.csv("data.csv", sep=";", check.names = TRUE)
+kable(head(emails[,1:10]))
+
+n = dim(emails)[1]
+id = sample(1:n, floor(n*0.70))
+train_emails = emails[id,]
+val_emails = emails[-id,]
+
+```
+
 ## 2.1)
 
 Divide data into training and test sets (70/30) without scaling. Perform nearest shrunken centroid classification of training data in which the threshold is chosen by cross-validation. Provide a centroid plot and interpret it. How many features were selected by the method? List the names of the 10 most contributing features and comment whether it is reasonable that they have strong effect on the discrimination between the conference mails and other mails? Report the test error.
+
+```{r, echo = FALSE}
+
+################################################################################
+# 2.1)
+################################################################################
+
+
+
+```
+
 
 ## 2.2)
 
@@ -134,14 +161,7 @@ Compare the results of these models with the results of the nearest shrunken cen
 
 Implement Benjamini-Hochberg method for the original data, and use t.test() for computing p-values. Which features correspond to the rejected hypotheses? Interpret the result.
 
-```{r, echo = FALSE}
 
-################################################################################
-# 2) High-dimensional method
-################################################################################
-
-
-```
 
 
 
