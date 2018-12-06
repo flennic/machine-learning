@@ -474,7 +474,7 @@ Let's import the data and have a look at it:
 # Assignment 3: Uncertainty Estimation
 ################################################################################
 
-statedata = read.csv("./State.csv", sep = ";")
+statedata = read.csv("./State.csv", sep = ";", dec = ",")
 kable(head(statedata),  caption = "State.csv")
 
 ```
@@ -527,7 +527,7 @@ pruned_tree_prediction = predict(pruned_tree, newdata = statedata, type = "vecto
 # We create a data.frame to save our values to make it easier to plot the data
 pruned_tree_plot_dataframe =
   data.frame(statedata$MET, statedata$EX, pruned_tree_prediction,
-             abs(pruned_tree_prediction-statedata$EX))
+             pruned_tree_prediction-statedata$EX)
 names(pruned_tree_plot_dataframe) = c("met", "orignal_ex", "predicted_ex", "residual")
 
 # Lets first plot the pruned tree
@@ -559,7 +559,7 @@ And here we have the histrogram of the residuals.
 ```{r, echo = FALSE}
 
 hist(pruned_tree_plot_dataframe$residual,
-     col="indianred1", main = "Histogram of the Residuals", xlab = "Residuals")
+     col="orange", main = "Histogram of the Residuals", xlab = "Residuals")
 
 ```
 
@@ -575,7 +575,7 @@ The histogramm looks like a Chi-Squared distribution with ```k ~ 3```.
 - Consider the width of the confidence band and comment whether results of the regression model in
 step 2 seem to be reliable.
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
 
 # We take the function given from the slides and adjust to the tree
 # computing bootstrap samples
