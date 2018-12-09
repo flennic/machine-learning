@@ -23,7 +23,7 @@ library(ggplot2)
 library(knitr)
 library(mgcv)
 library(pamr)
-library(e1071)
+library(kernlab)
 library(glmnet)
 set.seed(1234567890)
 
@@ -295,6 +295,7 @@ model_elastic_net = glmnet(x, y, alpha = 0.5, family = "binomial")
 # Support vector machine with "vanilladot" kernel.
 # Vanilladot means "Linear Kernel Function"
 #model_svm = svm(x = x, y = y, kernel = "linear")
+model_svm = ksvm(Conference ~ ., train_emails, kernel = "vanilladot")
 
 ```
 
@@ -322,7 +323,7 @@ Implement Benjamini-Hochberg method for the original data, and use t.test() for 
 # 1) Calculate p-values
 # 2) Assign ranks and sort
 # 3) BH Critical Value
-# 4) Find critical value and select all < p
+# 4) Find critical value and select all p < score
 
 q_value = 0.05
 
@@ -335,7 +336,7 @@ for (i in 1:(ncol(emails)-1)) {
   colname = colnames(emails)[i]
   c_formula = paste(sep = "", colname, " ~ Conference")
   # one.sided, less, greater
-  p_value = t.test(as.formula(c_formula), data = emails, alternative="less")
+  p_value = t.test(as.formula(c_formula), data = emails, alternative="two.sided")
   
   feature_names = c(feature_names, colname)
   p_values = c(p_values, p_value$p.value)
@@ -365,9 +366,10 @@ for (j in 1:nrow(bh_entries)) {
 bh_entries = data.frame(bh_entries, cv_scores)
 
 ## 4)
-## Okay, which alpha is to be used here?! 0.5? Then we have a LOT of features!
-## Find all rows upwards where cv_scores is roughly smaller than the supplied value
+## Find all rows where p_values < cv_scores
+bh_entries = bh_entries[bh_entries$p_values < bh_entries$cv_scores,]
 
+kable(bh_entries)
 
 ```
 
