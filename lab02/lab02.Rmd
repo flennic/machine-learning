@@ -3,13 +3,13 @@ title: "Machine Learning Lab 02"
 author: "Maximilian Pfundstein (maxpf364)"
 date: "`r Sys.Date()`"
 output:
-  html_document:
-    df_print: paged
-    toc_float: true
-    number_sections: true
   pdf_document:
     toc: true
     toc_depth: 3
+    number_sections: true
+  html_document:
+    df_print: paged
+    toc_float: true
     number_sections: true
 ---
 
@@ -227,7 +227,7 @@ title("Optimal Tree")
 
 
 ### Interpretating the Tree Structure
-The tree splits the data based on if the duration is smaller than ```43.5```. This means this is the feature where the tree evaluated the most influence on the prediction. We can see that the right side only has one more variable which is savings. On the left side the tree splits further, starting with the history as the second most important feature after deciding the duration. As the tree has more leaves to teh left side we can see, that splitting this data further makes more than than it would've been on teh right sind.
+The tree splits the data based on if the savings is smaller than ```2.5```. This means this is the feature where the tree evaluated the most influence on the prediction. We can see that the right side has no further splits. On the left side the tree splits further, starting with the duration as the second most important feature. As the tree has more leaves to the left side we can see that splitting this data further makes more sense than splitting it further on the right side. The tree has a depth of 3.
 
 ### Estimate of the Missclassification Rate
 
@@ -527,7 +527,7 @@ pruned_tree_prediction = predict(pruned_tree, newdata = statedata, type = "vecto
 # We create a data.frame to save our values to make it easier to plot the data
 pruned_tree_plot_dataframe =
   data.frame(statedata$MET, statedata$EX, pruned_tree_prediction,
-             abs(pruned_tree_prediction-statedata$EX))
+             pruned_tree_prediction-statedata$EX)
 names(pruned_tree_plot_dataframe) = c("met", "orignal_ex", "predicted_ex", "residual")
 
 # Lets first plot the pruned tree
@@ -559,12 +559,12 @@ And here we have the histrogram of the residuals.
 ```{r, echo = FALSE}
 
 hist(pruned_tree_plot_dataframe$residual,
-     col="indianred1", main = "Histogram of the Residuals", xlab = "Residuals")
+     col="orange", main = "Histogram of the Residuals", xlab = "Residuals", breaks = 20)
 
 ```
 
 
-The histogramm looks like a Chi-Squared distribution with ```k ~ 3```.
+The histogramm looks like a Chi-Squared distribution with ```k ~ 3```. As our tree has only three levels of outcome, we have only "three lines" in our plot (blue dots). They only vary in length and their EX value. As we only have those three levels, the quality of this fit is actually not that bet (as it's somehow capturing teh trend of the data). If if were better, it'd probably overfit which means that it will perform worse on new data (let's dave if the amount of levels is way higher than three).
 
 ## Confidence Bands (non-parametric)
 
@@ -612,14 +612,13 @@ ggplot(pruned_tree_plot_dataframe) +
   geom_ribbon(aes(x = pruned_tree_plot_dataframe$met,
                   ymin = ci_non_p_bootstrap_df$lower_bound,
                   ymax = ci_non_p_bootstrap_df$upper_bound),
-              alpha = 0.4, fill = "indianred1", color = "red") +
+              alpha = 0.4, fill = "orange", color = "orange3") +
     labs(title = "Confidence Bands (non-parametric)", y = "EX",
        x = "MET", color = "Legend")
 
 ```
 
-The prediction interval is neither really smooth or bumby, it's somwhere in between.
-**TODO**.
+The confidence bands seem bumpy. This rises from the fact that our tree model has basically just three levels (compare residuals plot) and as we average this over all of the samples, we get this result. The results from our regression model from step 2 seem reliable as it's following the general trend of our data.
 
 ## Confidence Bands (parametric)
 
@@ -687,7 +686,7 @@ ggplot(pruned_tree_plot_dataframe_p) +
   geom_ribbon(aes(x = pruned_tree_plot_dataframe_p$met,
                   ymin = ci_p_bootstrap_df$lower_bound,
                   ymax = ci_p_bootstrap_df$upper_bound),
-              alpha = 0.4, fill = "indianred1", color = "red") +
+              alpha = 0.4, fill = "orange", color = "orange3") +
     labs(title = "Confidence Bands (parametric)", y = "EX",
        x = "MET", color = "Legend")
 
@@ -735,7 +734,7 @@ ggplot(pruned_tree_plot_dataframe_p_pb) +
   geom_ribbon(aes(x = pruned_tree_plot_dataframe_p_pb$met,
                   ymin = pb_p_bootstrap_df$lower_bound,
                   ymax = pb_p_bootstrap_df$upper_bound), alpha = 0.4,
-              fill = "indianred1", color = "red") +
+              fill = "orange", color = "orange3") +
     labs(title = "Prediction Bands (parametric)", y = "EX",
        x = "MET", color = "Legend")
 
@@ -748,8 +747,7 @@ ggplot(pruned_tree_plot_dataframe_p_pb) +
 **Task: ** Consider the histogram of residuals from step 2 and suggest what kind of
 bootstrap is actually more appropriate here.
 
-**Answer: ** **TODO**
-
+**Answer:** It makes more sense to use a parametric bootstrap if the distribution is known. Looking at the histrogram we cannot really estimate from which kind of distributions this one is coming from as we have only few data points. Thus a non-parametric bootstrap would make more sense here. If we had more data points, this estimation could change.
 
 # Assignemnt 4: Principal Components
 
@@ -807,7 +805,7 @@ Let's have a look at the plot for PC1 and PC2.
 ggplot(as.data.frame(res$x)) +
   geom_point(aes(x = res$x[,1],
                  y = res$x[,2]),
-             color = "indianred1") +
+             color = "orange") +
     labs(title = "PC1 vs. PC2", y = "PC2",
        x = "PC1", color = "Legend")
 
@@ -828,7 +826,7 @@ plot(U[,2], main = "Traceplot, PC2")
 
 ```
 
-**TODO:** Add explanation!
+The latter one seems to be explained by fewer features as more coordinates are around zero.
 
 ## ICA
 
@@ -854,14 +852,13 @@ plot(W_dash[,2], main= "Column 2")
 ggplot(as.data.frame(W_dash)) +
   geom_point(aes(x = W_dash[,1],
                  y = W_dash[,2]),
-             color = "indianred1") +
+             color = "orange") +
     labs(title = "Feature 1 vs Feature 2", y = "Feature 2",
        x = "Feature 1", color = "Legend")
 
 ```
 
-**Conclusion: ** **TODO**
-
+**Conclusion: ** W' is the direct projection from the feature space into new space found by ICA. K is the pre-whitning matrix and W is our estimated un-mixing matrix. We can see for component two, that a similar basis is found, but inverted.
 
 # Appendix: Source Code
 
