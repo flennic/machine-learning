@@ -474,7 +474,7 @@ Let's import the data and have a look at it:
 # Assignment 3: Uncertainty Estimation
 ################################################################################
 
-statedata = read.csv("./State.csv", sep = ";")
+statedata = read.csv("./State.csv", sep = ";", dec = ",")
 kable(head(statedata),  caption = "State.csv")
 
 ```
@@ -575,7 +575,7 @@ The histogramm looks like a Chi-Squared distribution with ```k ~ 3```. As our tr
 - Consider the width of the confidence band and comment whether results of the regression model in
 step 2 seem to be reliable.
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
 
 # We take the function given from the slides and adjust to the tree
 # computing bootstrap samples
