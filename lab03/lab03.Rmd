@@ -27,7 +27,7 @@ library(geosphere)
 
 - Implement a kernel method to predict the hourly temperatures for a date and place in Sweden.
 - You are asked to provide a temperature forecast for a date and place in Sweden. The
-forecast should consist of the predicted temperatures from 4 am to 24 pm in an interval of 2
+forecast should consist of the predicted te mperatures from 4 am to 24 pm in an interval of 2
 hours.
 - Use a kernel that is the sum of three Gaussian kernels.
   - The first to account for the distance from a station to the point of interest.
@@ -51,6 +51,30 @@ be used to compute the forecast. Feel free to use the template below to solve th
 # Kernel Methods
 ################################################################################
 
+# Helper functions
+
+## Kernels
+## The definition for the Guassian Kernel is taken from the slides, page 6.
+
+kernel_gauss_distance = function(pointA, pointB) {
+  # Use distHaversine() as a help
+  u = distHaversine(c(pointA$latitude, pointA$longitude),
+                    c(pointB$latitude, pointB$longitude))
+  return(exp(-(u^2)))
+}
+
+kernel_gauss_day = function(dayA, dayB) {
+  u = as.numeric(as.Date(dayA$date)-as.Date(dayB$date))
+  return(exp(-(u^2)))
+}
+
+kernel_gauss_hour = function (hourA, hourB) {
+  u = as.numeric(difftime(strptime(hourA$time, format = "%H:%M:%S"),
+                          strptime(hourB$time, format = "%H:%M:%S")))
+  return(exp(-(u^2)))
+}
+
+
 set.seed(1234567890)
 stations <- read.csv("stations.csv")
 temps <- read.csv("temps50k.csv")
@@ -62,7 +86,9 @@ h_time <-
 a <- 58.4274 # The point to predict (up to the students)
 b <- 14.826
 date <- "2013-11-04" # The date to predict (up to the students)
-times <- c("04:00:00", "06:00:00", ..., "24:00:00")
+times <- c("04:00:00", "06:00:00", "08:00:00", "10:00:00", "12:00:00",
+           "14:00:00", "16:00:00", "18:00:00", "20:00:00", "22:00:00",
+           "24:00:00")
 temp <- vector(length=length(times))
 # Students' code here
 plot(temp, type="o")
