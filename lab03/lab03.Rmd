@@ -1,0 +1,106 @@
+---
+title: "Lab 3 Block 1: Kernel Meethods and Neural Networks"
+author: "Maximilian Pfundstein"
+date: "9 December 2018"
+output:
+  html_document:
+    df_print: paged
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: 3
+  word_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+library(geosphere)
+
+```
+
+# Kernel Methods
+
+**Task:**
+
+- Implement a kernel method to predict the hourly temperatures for a date and place in Sweden.
+- You are asked to provide a temperature forecast for a date and place in Sweden. The
+forecast should consist of the predicted temperatures from 4 am to 24 pm in an interval of 2
+hours.
+- Use a kernel that is the sum of three Gaussian kernels.
+  - The first to account for the distance from a station to the point of interest.
+  - The second to account for the distance between the day a temperature measurement
+was made and the day of interest.
+  - The third to account for the distance between the hour of the day a temperature measurement
+was made and the hour of interest.
+- Choose an appropriate smoothing coefficient or width for each of the three kernels above.
+- Show that your choice for the kernels' width is sensible, i.e. that it gives more weight
+to closer points. Discuss why your of definition of closeness is reasonable.
+- Instead of combining the three kernels into one by summing them up, multiply them.
+Compare the results obtained in both cases and elaborate on why they may differ.
+
+*Note that the file temps50k.csv may contain temperature measurements that are posterior
+to the day and hour of your forecast. You must filter such measurements out, i.e. they cannot
+be used to compute the forecast. Feel free to use the template below to solve the assignment.*
+
+```{r, echo = FALSE, eval = FALSE}
+
+################################################################################
+# Kernel Methods
+################################################################################
+
+set.seed(1234567890)
+stations <- read.csv("stations.csv")
+temps <- read.csv("temps50k.csv")
+st <- merge(stations,temps,by="station_number")
+
+h_distance <- # These three values are up to the students
+h_date <-
+h_time <-
+a <- 58.4274 # The point to predict (up to the students)
+b <- 14.826
+date <- "2013-11-04" # The date to predict (up to the students)
+times <- c("04:00:00", "06:00:00", ..., "24:00:00")
+temp <- vector(length=length(times))
+# Students' code here
+plot(temp, type="o")
+
+```
+
+
+
+# Support Vector Machines
+
+**Task:**
+
+- Use the function ksvm from the R package kernlab to learn a SVM for classifying the
+spam dataset that is included with the package.
+  - Consider the radial basis function kernel (also
+known as Gaussian) with a width of 0.05. For the C parameter, consider values 0.5, 1 and 5.
+This implies that you have to consider three models.
+- Perform model selection, i.e. select the most promising of the three models (use any
+method of your choice except cross-validation or nested cross-validation).
+- Estimate the generalization error of the SVM selected above (use any method of your
+choice except cross-validation or nested cross-validation).
+- Produce the SVM that will be returned to the user, i.e. show the code.
+- What is the purpose of the parameter C?
+
+```{r, echo = FALSE}
+
+################################################################################
+# Support Vector Machines
+################################################################################
+
+
+
+```
+
+
+
+# Appendix: Source Code
+
+```{r, ref.label=knitr::all_labels(), echo = TRUE, eval = FALSE}
+
+```
