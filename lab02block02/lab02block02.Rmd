@@ -23,6 +23,8 @@ library(ggplot2)
 library(knitr)
 library(mgcv)
 library(pamr)
+library(e1071)
+library(glmnet)
 set.seed(1234567890)
 
 ```
@@ -234,9 +236,13 @@ val_emails = emails[-id,]
 
 ## 2.1)
 
-Divide data into training and test sets (70/30) without scaling. Perform nearest shrunken centroid classification of training data in which the threshold is chosen by cross-validation. Provide a centroid plot and interpret it. How many features were selected by the method? List the names of the 10 most contributing features and comment whether it is reasonable that they have strong effect on the discrimination between the conference mails and other mails? Report the test error.
+- Divide data into training and test sets (70/30) without scaling.
+- Perform nearest shrunken centroid classification of training data in which the threshold is chosen by cross-validation.
+- Provide a centroid plot and interpret it. How many features were selected by the method?
+- List the names of the 10 most contributing features and comment whether it is reasonable that they have strong effect on the discrimination between the conference mails and other mails?
+- Report the test error.
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, results='hide'}
 
 ################################################################################
 # 2.1)
@@ -245,7 +251,7 @@ Divide data into training and test sets (70/30) without scaling. Perform nearest
 rownames(train_emails) = 1:nrow(train_emails)
 x = t(train_emails[,-ncol(train_emails)])
 y = train_emails[[ncol(train_emails)]]
-mydata = list(x=x ,y=as.factor(y) ,geneid = as.character(1:nrow(x)),
+mydata = list(x=x ,y=as.factor(y), geneid = as.character(1:nrow(x)),
               genenames = rownames(x))
 
 nsc_model = pamr.train(mydata, threshold=seq(0, 4, 0.1))
@@ -255,8 +261,8 @@ nsc_model_cv = pamr.cv(nsc_model, mydata)
 
 ```{r, echo = FALSE}
 
-pamr.plotcen(nsc_model, train_emails, threshold = 1)
-pamr.plotcen(nsc_model, train_emails, threshold = 2.5)
+pamr.plotcen(nsc_model, mydata, threshold = 1)
+pamr.plotcen(nsc_model, mydata, threshold = 2.5)
 
 print(nsc_model_cv)
 pamr.plotcv(nsc_model_cv)
@@ -270,21 +276,107 @@ pamr.plotcv(nsc_model_cv)
 Compute the test error and the number of the contributing features for the following methods fitted to the training data:
 
   - Elastic net with the binomial response and a = 0.5 in which penalty is selected by the cross-validation
-  - Support vector machine with “vanilladot” kernel.
+  - Support vector machine with "vanilladot"" kernel.
   
 Compare the results of these models with the results of the nearest shrunken centroids (make a comparative table). Which model would you prefer and why?
+
+```{r, echo = FALSE}
+
+# Elastic Net
+
+# Predictor Variables. The -1 removes the intercept component
+x = model.matrix(Conference ~ ., train_emails)[,-1]
+
+# Outcome variable
+y = train_emails$Conference
+
+model_elastic_net = glmnet(x, y, alpha = 0.5, family = "binomial")
+
+# Support vector machine with "vanilladot" kernel.
+# Vanilladot means "Linear Kernel Function"
+#model_svm = svm(x = x, y = y, kernel = "linear")
+
+```
+
+```{r, echo = FALSE}
+
+print(model_elastic_net)
+summary(model_elastic_net)
+plot(model_elastic_net)
+
+```
+
+
 
 ## 2.3)
 
 Implement Benjamini-Hochberg method for the original data, and use t.test() for computing p-values. Which features correspond to the rejected hypotheses? Interpret the result.
 
 
+```{r, echo = FALSE}
+
+# Orignal Data Set: emails
+# H0: Feature has effect on Conference
+# Ha: Feature has no effect on Conference
+
+# 1) Calculate p-values
+# 2) Assign ranks and sort
+# 3) BH Critical Value
+# 4) Find critical value and select all < p
+
+q_value = 0.05
+
+## 1)
+
+feature_names = c()
+p_values = c()
+
+for (i in 1:(ncol(emails)-1)) {
+  colname = colnames(emails)[i]
+  c_formula = paste(sep = "", colname, " ~ Conference")
+  # one.sided, less, greater
+  p_value = t.test(as.formula(c_formula), data = emails, alternative="less")
+  
+  feature_names = c(feature_names, colname)
+  p_values = c(p_values, p_value$p.value)
+}
+
+## 2)
+
+bh_entries = data.frame(feature_names, p_values)
+bh_entries = bh_entries[order(bh_entries$p_values, decreasing = FALSE),]
+rownames(bh_entries) = NULL
+
+
+## 3)
+
+getCV_BH = function(i, m, Q) {
+  return(i/m*Q)
+}
+
+cv_scores = c()
+
+for (j in 1:nrow(bh_entries)) {
+  current_val = getCV_BH(as.numeric(rownames(bh_entries)[j]), nrow(bh_entries), q_value)
+  cv_scores = c(cv_scores, current_val)
+}
+
+#cv_col = apply(bh_entries, 1, function(x) getCV_BH(as.numeric(rownames(bh_entries)), nrow(bh_entries), q_value))
+bh_entries = data.frame(bh_entries, cv_scores)
+
+## 4)
+## Okay, which alpha is to be used here?! 0.5? Then we have a LOT of features!
+## Find all rows upwards where cv_scores is roughly smaller than the supplied value
+
+
+```
 
 
 
 # Appendix
 
 ```{r, ref.label = knitr::all_labels(), echo = TRUE, eval = FALSE}
+
 ```
 
 # Bibliography
