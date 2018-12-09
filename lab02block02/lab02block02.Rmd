@@ -22,6 +22,7 @@ library(readxl)
 library(ggplot2)
 library(knitr)
 library(mgcv)
+library(pamr)
 set.seed(1234567890)
 
 ```
@@ -220,13 +221,14 @@ The data file data.csv contains information about 64 e-mails which were manually
 # 2) High-dimensional method
 ################################################################################
 
-#emails = read.csv("data.csv", sep=";", check.names = TRUE)
-#kable(head(emails[,1:10]))
+emails = read.csv2("data.csv", fileEncoding = "ISO-8859-1", sep = ";")
+emails$Conference = as.factor(emails$Conference)
+kable(head(emails[,1:10]))
 
-#n = dim(emails)[1]
-#id = sample(1:n, floor(n*0.70))
-#train_emails = emails[id,]
-#val_emails = emails[-id,]
+n = dim(emails)[1]
+id = sample(1:n, floor(n*0.70))
+train_emails = emails[id,]
+val_emails = emails[-id,]
 
 ```
 
@@ -240,9 +242,27 @@ Divide data into training and test sets (70/30) without scaling. Perform nearest
 # 2.1)
 ################################################################################
 
+rownames(train_emails) = 1:nrow(train_emails)
+x = t(train_emails[,-ncol(train_emails)])
+y = train_emails[[ncol(train_emails)]]
+mydata = list(x=x ,y=as.factor(y) ,geneid = as.character(1:nrow(x)),
+              genenames = rownames(x))
 
+nsc_model = pamr.train(mydata, threshold=seq(0, 4, 0.1))
+nsc_model_cv = pamr.cv(nsc_model, mydata)
 
 ```
+
+```{r, echo = FALSE}
+
+pamr.plotcen(nsc_model, train_emails, threshold = 1)
+pamr.plotcen(nsc_model, train_emails, threshold = 2.5)
+
+print(nsc_model_cv)
+pamr.plotcv(nsc_model_cv)
+
+```
+
 
 
 ## 2.2)
