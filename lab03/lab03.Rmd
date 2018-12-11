@@ -58,8 +58,10 @@ be used to compute the forecast. Feel free to use the template below to solve th
 
 kernel_gauss_distance = function(pointA, pointB, smoothing) {
   # Use distHaversine() as a help
-  u = distHaversine(c(pointA$latitude, pointA$longitude),
-                    c(pointB$latitude, pointB$longitude))
+  # Needed as distHaversine does not operate on dataframes with more than two
+  # columns
+  m = cbind(pointB$latitude, pointB$longitude)
+  u = distHaversine(m, c(pointA$latitude, pointA$longitude))
   u = u / smoothing
   return(exp(-(u^2)))
 }
@@ -129,24 +131,27 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
     
     if (u_type == "sum") {
       # Parameters: A, B, h_distance, h_date, h_time
-      k_sum = kernel_sum(user_data_point, st, h_distance, h_distance, h_time)
+      kernel = kernel_sum(user_data_point, st, h_distance, h_distance, h_time)
     }
     else if (u_type == "prod") {
       # Parameters: A, B, h_distance, h_date, h_time
-      k_prod =
-        kernel_product(user_data_point, st, h_distance, h_distance, h_time))
+      kernel =
+        kernel_product(user_data_point, st, h_distance, h_distance, h_time)
     }
     else {
       stop("Du Nasenbär!")
     }
     
-    ## Calculate the kernel sum and product
+    # Now that we have the kernel value, we can calcuate the actual prediction
+    # Formula taken from slide 8 from 
+    # "Histogram, Moving Window, and Kernel Regression""
+    y = kernel %*% st$air_temperature/sum(kernel)
     
-    
-    
+    # Let's save this predicted temperature
+    temp[i] = y
   }
   
-  return("lala")
+  return(data.frame(times, temp))
 }
 
 set.seed(1234567890)
@@ -156,10 +161,23 @@ b <- 14.826
 date <- "2013-11-04" # The date to predict (up to the students)
 
 # Students' code here
+pred_temp_sum = predict_weather(a, b, date, "sum")
+pred_temp_prod = predict_weather(a, b, date, "prod")
+plot_data_frame =
+  data.frame(pred_temp_sum$times, pred_temp_sum$temp, pred_temp_prod$temp)
+colnames(plot_data_frame) = c("hour", "predWithSum", "predWithProd")
 
-predict_weather(a, b, date)
+ggplot(plot_data_frame) +
+  geom_line(aes(x = hour, y = predWithSum,
+                colour = "Kernel Regression (Sum)")) +
+  geom_point(aes(x = hour, y = predWithSum), colour = "orange") +
+  geom_line(aes(x = hour, y = predWithProd,
+                colour = "Kernel Regression (Prod)")) +
+  geom_point(aes(x = hour, y = predWithProd), colour = "blue") +
+  labs(title = "Temperature Prediction with Kernel Regression (Sum and Prod)",
+       y = "Temperature", x = "Hour of the Day", color = "Legend") +
+  scale_color_manual(values = c("blue", "orange"))
 
-plot(temp, type="o")
 
 ```
 

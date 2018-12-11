@@ -74,6 +74,10 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
     if (u_type == "sum") {
       # Parameters: A, B, h_distance, h_date, h_time
       k_sum = kernel_sum(user_data_point, st, h_distance, h_distance, h_time)
+      # Now that we have the kernel value, we can calcuate the actual prediction
+      # Formula taken from slide 8 from 
+      # "Histogram, Moving Window, and Kernel Regression""
+      y = k_sum %*% st$air_temperature/sum(k_sum)
     }
     else if (u_type == "prod") {
       # Parameters: A, B, h_distance, h_date, h_time
