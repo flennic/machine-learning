@@ -18,6 +18,8 @@ output:
 
 knitr::opts_chunk$set(echo = TRUE)
 library(geosphere)
+library(ggplot2)
+library(kernlab)
 
 ```
 
@@ -45,7 +47,7 @@ Compare the results obtained in both cases and elaborate on why they may differ.
 to the day and hour of your forecast. You must filter such measurements out, i.e. they cannot
 be used to compute the forecast. Feel free to use the template below to solve the assignment.*
 
-```{r, echo = FALSE, eval = FALSE}
+```{r, echo = FALSE, eval = TRUE}
 
 ################################################################################
 # Kernel Methods
@@ -102,6 +104,10 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
   temps = read.csv("temps50k.csv", encoding = "UTF-8")
   st = merge(stations, temps, by="station_number")
   
+  # Filter all date posterior to the given date (doesn't make sense to predict
+  # something that we already now)
+  st = st[as.Date(st$date) < as.Date(u_date),]
+  
   # Given Data
   # Each user input should be a list of:
   # latitude, longitude, date, time
@@ -139,7 +145,7 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
         kernel_product(user_data_point, st, h_distance, h_distance, h_time)
     }
     else {
-      stop("Du Nasenbär!")
+      stop("Du Nasenbaer!")
     }
     
     # Now that we have the kernel value, we can calcuate the actual prediction
@@ -187,15 +193,9 @@ ggplot(plot_data_frame) +
 
 **Task:**
 
-- Use the function ksvm from the R package kernlab to learn a SVM for classifying the
-spam dataset that is included with the package.
-  - Consider the radial basis function kernel (also
-known as Gaussian) with a width of 0.05. For the C parameter, consider values 0.5, 1 and 5.
-This implies that you have to consider three models.
-- Perform model selection, i.e. select the most promising of the three models (use any
-method of your choice except cross-validation or nested cross-validation).
-- Estimate the generalization error of the SVM selected above (use any method of your
-choice except cross-validation or nested cross-validation).
+Use the function ksvm from the R package kernlab to learn a SVM for classifying the spam dataset that is included with the package. Consider the radial basis function kernel (also known as Gaussian) with a width of 0.05. For the C parameter, consider values 0.5, 1 and 5. This implies that you have to consider three models.
+- Perform model selection, i.e. select the most promising of the three models (use any method of your choice except cross-validation or nested cross-validation).
+- Estimate the generalization error of the SVM selected above (use any method of your choice except cross-validation or nested cross-validation).
 - Produce the SVM that will be returned to the user, i.e. show the code.
 - What is the purpose of the parameter C?
 
@@ -205,10 +205,70 @@ choice except cross-validation or nested cross-validation).
 # Support Vector Machines
 ################################################################################
 
+data(spam)
+n = dim(spam)[1]
+id = sample(1:n, floor(n*0.70))
+train_spam = spam[id,]
+val_spam = spam[-id,]
 
+# Our three models depending on
+model_svm_05 =
+  ksvm(type ~ ., val_spam, kernel = "rbfdot", lambda = 0.05, C = 0.5)
+model_svm_1 =
+  ksvm(type ~ ., val_spam, kernel = "rbfdot", lambda = 0.05, C = 1)
+model_svm_5 =
+  ksvm(type ~ ., val_spam, kernel = "rbfdot", lambda = 0.05, C = 5)
+
+model_svm_05_prediction = predict(model_svm_05, newdata = val_spam)
+model_svm_1_prediction = predict(model_svm_1, newdata = val_spam)
+model_svm_5_prediction = predict(model_svm_5, newdata = val_spam)
+
+cm_svm_05 = table(val_spam$type, model_svm_05_prediction)
+cm_svm_1 = table(val_spam$type, model_svm_1_prediction)
+cm_svm_5 = table(val_spam$type, model_svm_5_prediction)
+
+error_svm_05 = 1 - sum(diag(cm_svm_05)/sum(cm_svm_05))
+error_svm_1 = 1 - sum(diag(cm_svm_1)/sum(cm_svm_1))
+error_svm_5 = 1 - sum(diag(cm_svm_5)/sum(cm_svm_5))
 
 ```
 
+The confusion matrices look like this (C = 0.5, C = 1, C = 5):
+
+```{r, echo = FALSE}
+
+print(cm_svm_05)
+print(cm_svm_1)
+print(cm_svm_5)
+
+```
+
+The error rates are (```C = 0.5```, ```C = 1```, ```C = 5```):
+
+```{r, echo = FALSE}
+
+print(error_svm_05)
+print(error_svm_1)
+print(error_svm_5)
+
+```
+
+
+Therefor we select the model where ```C = 5```.
+
+```{r, echo = FALSE}
+
+print(model_svm_5)
+
+```
+
+
+C defines the cost of the constraint violation penalty. The default value is set
+to 1 and it is an factor added to the error function. Thos means, for ```C = 0.5```
+the errors a halved and for ```C = 5``` they are five times as large. Keep in
+mind that we also have $\epsilon$ which defines the threshold, when an error is
+applied. C must always be greater than 0, otherwise there would never be an error.
+Normally C and $\epsilon$ are selected by Cross-Validation.
 
 
 # Appendix: Source Code
