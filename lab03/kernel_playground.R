@@ -44,6 +44,10 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
   temps = read.csv("temps50k.csv", encoding = "UTF-8")
   st = merge(stations, temps, by="station_number")
   
+  # Filter all date posterior to the given date (doesn't make sense to predict
+  # something that we already now)
+  st = st[as.Date(st$date) < as.Date(u_date),]
+  
   # Given Data
   # Each user input should be a list of:
   # latitude, longitude, date, time
