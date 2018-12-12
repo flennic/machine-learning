@@ -58,7 +58,7 @@ be used to compute the forecast. Feel free to use the template below to solve th
 min_distance = function(a, b, ringSize) {
   
   boundOne = sapply(b, FUN = function(x) abs(a - x))
-  boundTwo = sapply(b, FUN = function(x) abs(a+ringSize-x))
+  boundTwo = sapply(b, FUN = function(x) abs(a + ringSize - x))
   
   return(pmin(boundOne, boundTwo))
 }
@@ -115,10 +115,12 @@ plot_values_day =
                 "2013-09-01", "2013-09-16", "2013-10-01", "2013-10-16",
                 "2013-11-01", "2013-11-16", "2013-12-01", "2013-12-16"))
 
-plot_values_hour = list(time = c("04:00:00", "05:00:00", "06:00:00", "07:00:00", "08:00:00",
-                    "09:00:00", "10:00:00", "11:00:00", "12:00:00", "13:00:00",
-                    "14:00:00", "15:00:00", "16:00:00", "17:00:00", "18:00:00",
-                    "19:00:00", "20:00:00", "21:00:00", "22:00:00", "24:00:00"))
+plot_values_hour =
+  list(time = c("04:00:00", "05:00:00", "06:00:00", "07:00:00",
+                "08:00:00", "09:00:00", "10:00:00", "11:00:00",
+                "12:00:00", "13:00:00", "14:00:00", "15:00:00",
+                "16:00:00", "17:00:00", "18:00:00", "19:00:00",
+                "20:00:00", "21:00:00", "22:00:00", "24:00:00"))
 
 compare_value_distance = list(latitude = 50, longitude = 50)
 compare_value_day = list(date = "2018-07-01")
@@ -211,9 +213,11 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
   # time is created with the loop at we predict for every time for the given day
   
   # Times to predict
-  times = c("04:00:00", "06:00:00", "08:00:00", "10:00:00", "12:00:00",
-           "14:00:00", "16:00:00", "18:00:00", "20:00:00", "22:00:00",
-           "24:00:00")
+  times = c("04:00:00", "05:00:00", "06:00:00", "07:00:00",
+            "08:00:00", "09:00:00", "10:00:00", "11:00:00",
+            "12:00:00", "13:00:00", "14:00:00", "15:00:00",
+            "16:00:00", "17:00:00", "18:00:00", "19:00:00",
+            "20:00:00", "21:00:00", "22:00:00", "23:00:00", "24:00:00")
   
   # Temperatures to predict
   temp = vector(length=length(times))
@@ -258,7 +262,7 @@ set.seed(1234567890)
 # Linkoeping
 latitude = 58.410809
 longitude = 15.621373
-date <- "2000-05-08" # The date to predict (up to the students)
+date = "2000-05-08"
 
 ```
 
