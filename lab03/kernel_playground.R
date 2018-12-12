@@ -5,8 +5,8 @@ kernel_gauss_distance = function(pointA, pointB, smoothing) {
   # Needed as distHaversine does not operate on dataframes with more than two
   # columns
   # Smooting factor should be > 10000
-  m = cbind(pointB$latitude, pointB$longitude)
-  u = distHaversine(m, c(pointA$latitude, pointA$longitude))
+  m = cbind(pointB$longitude, pointB$latitude)
+  u = distHaversine(m, c(pointA$longitude, pointA$latitude))
   u = u / smoothing
   return(exp(-(u^2)))
 }
@@ -65,9 +65,9 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
   temp = vector(length=length(times))
   
   # Smoothing factors
-  h_distance = 10000
-  h_date = 10
-  h_time = 10
+  h_distance = 30000 #1000000 # 5000
+  h_date = 2#700 # 7
+  h_time = 5#2600 # 26
   
   # Prediction for each temp to predict
   for (i in 1:length(times)) {
@@ -101,17 +101,26 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
     temp[i] = y
   }
   
-  return("lala")
+  return(data.frame(times, temp))
 }
 
 set.seed(1234567890)
 
-a <- 58.4274 # The point to predict (up to the students)
-b <- 14.826
-date <- "2013-11-04" # The date to predict (up to the students)
+# Linköping
+latitude = 58.410809
+longitude = 15.621373
+
+# Berlin
+b_latitude = 52.520008
+b_longitude = 13.404954
+
+#a <- 17.6935 #58.4274 # The point to predict (up to the students)
+#b <- 59.9953 #14.826
+date <- "2000-05-08" # The date to predict (up to the students)
 
 # Students' code here
 
-predict_weather(a, b, date, "sum")
+pred = predict_weather(latitude, longitude, date, "prod")
+#pred2 = predict_weather(b_latitude, b_longitude, date, "prod")
 
-plot(temp, type="o")
+#plot(temp, type="o")

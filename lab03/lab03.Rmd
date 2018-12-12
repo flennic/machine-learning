@@ -60,8 +60,10 @@ kernel_gauss_distance = function(pointA, pointB, smoothing) {
   # Use distHaversine() as a help
   # Needed as distHaversine does not operate on dataframes with more than two
   # columns
-  m = cbind(pointB$latitude, pointB$longitude)
-  u = distHaversine(m, c(pointA$latitude, pointA$longitude))
+  # latitude
+  # longitude
+  m = cbind(pointB$longitude, pointB$latitude)
+  u = distHaversine(m, c(pointA$longitude, pointA$latitude))
   u = u / smoothing
   return(exp(-(u^2)))
 }
@@ -99,14 +101,19 @@ compare_value_distance = list(latitude = 50, longitude = 50)
 compare_value_day = list(date = "2013-07-01")
 compare_value_hour = list(time = "12:30:00")
 
+# Smoothing factors
+h_distance = 30000 #1000000 # 5000
+h_date = 2#700 # 7
+h_time = 5#2600 # 26
+
 # 5000
-distances = kernel_gauss_distance(compare_value_distance, plot_values_distance, 1000000)
+distances = kernel_gauss_distance(compare_value_distance, plot_values_distance, h_distance)
 
 # 7
-days = kernel_gauss_day(compare_value_day, plot_values_day, 700)
+days = kernel_gauss_day(compare_value_day, plot_values_day, h_date)
 
 # 26
-hours = kernel_gauss_hour(compare_value_hour, plot_values_hour, 2600)
+hours = kernel_gauss_hour(compare_value_hour, plot_values_hour, h_time)
 
 # Need to be continuous for plotting
 plot_values_day = as.numeric(as.Date(plot_values_day$date))
@@ -129,14 +136,14 @@ ggplot(plot_data_frame_distance) +
                 colour = "Distance (smoothing = 5000)")) +
   #geom_point(aes(x = plot_values_distance$latitude, y = distances),
   #           colour = "orange") +
-  labs(title = "Gaussian Kernel Cruve With Selected Smoothing Factors", y = "Kernel Output",
+  labs(title = "Gaussian Kernel Cruve With Selected Smoothing Factor", y = "Kernel Output",
        x = "Distance", color = "Legend") +
   scale_color_manual(values = c("orange"))
   
 ggplot(plot_data_frame_day) +
   geom_line(aes(x = plot_values_day, y = days, colour = "Day (smoothing = 7)")) +
   #geom_point(aes(x = plot_values_day, y = days), colour = "blue") #+
-  labs(title = "Gaussian Kernel Cruve With Selected Smoothing Factors", y = "Kernel Output",
+  labs(title = "Gaussian Kernel Cruve With Selected Smoothing Factor", y = "Kernel Output",
        x = "Day", color = "Legend") +
   scale_color_manual(values = c("blue"))
   
@@ -145,7 +152,7 @@ ggplot(plot_data_frame_hour) +
                 colour = "Hour (smoothing = 26)")) +
   #geom_point(aes(x = plot_values_hour, y = hours), colour = "green")
   #
-  labs(title = "Gaussian Kernel Cruves With Selected Smoothing Factors", y = "Kernel Output",
+  labs(title = "Gaussian Kernel Cruves With Selected Smoothing Factor", y = "Kernel Output",
        x = "Hour", color = "Legend") +
   scale_color_manual(values = c("violet"))
 
@@ -192,13 +199,14 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
   times = c("04:00:00", "06:00:00", "08:00:00", "10:00:00", "12:00:00",
            "14:00:00", "16:00:00", "18:00:00", "20:00:00", "22:00:00",
            "24:00:00")
+  
   # Temperatures to predict
   temp = vector(length=length(times))
   
   # Smoothing factors
-  h_distance = 1000000 # 5000
-  h_date = 700 # 7
-  h_time = 2600 # 26
+  h_i_distance = 300000 #1000000 # 5000
+  h_i__date = 20 #700 # 7
+  h_i_time = 50 #2600 # 26
   
   # Prediction for each temp to predict
   for (i in 1:length(times)) {
@@ -212,12 +220,12 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
     
     if (u_type == "sum") {
       # Parameters: A, B, h_distance, h_date, h_time
-      kernel = kernel_sum(user_data_point, st, h_distance, h_distance, h_time)
+      kernel = kernel_sum(user_data_point, st, h_i_distance, h_i__date, h_i_time)
     }
     else if (u_type == "prod") {
       # Parameters: A, B, h_distance, h_date, h_time
       kernel =
-        kernel_product(user_data_point, st, h_distance, h_distance, h_time)
+        kernel_product(user_data_point, st, h_i_distance, h_i__date, h_i_time)
     }
     else {
       stop("Du Nasenbaer!")
@@ -236,13 +244,14 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
 
 set.seed(1234567890)
 
-a <- 58.4274 # The point to predict (up to the students)
-b <- 14.826
-date <- "2013-11-04" # The date to predict (up to the students)
+# Linköping
+latitude = 58.410809
+longitude = 15.621373
+date <- "2000-05-08" # The date to predict (up to the students)
 
 # Students' code here
-pred_temp_sum = predict_weather(a, b, date, "sum")
-pred_temp_prod = predict_weather(a, b, date, "prod")
+pred_temp_sum = predict_weather(latitude, longitude, date, "sum")
+pred_temp_prod = predict_weather(latitude, longitude, date, "prod")
 plot_data_frame =
   data.frame(pred_temp_sum$times, pred_temp_sum$temp, pred_temp_prod$temp)
 colnames(plot_data_frame) = c("hour", "predWithSum", "predWithProd")
