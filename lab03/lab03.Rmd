@@ -1,17 +1,16 @@
 ---
 title: "Lab 3 Block 1: Kernel Meethods and Neural Networks"
 author: "Maximilian Pfundstein"
-date: "9 December 2018"
+date: "`r Sys.Date()`"
 output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
   html_document:
     df_print: paged
-    toc_float: yes
-  pdf_document:
-    toc: yes
-    toc_depth: 3
-  word_document:
-    toc: yes
-    toc_depth: '3'
+    toc_float: true
+    number_sections: true
 ---
 
 ```{r setup, include=FALSE}
@@ -47,7 +46,15 @@ Compare the results obtained in both cases and elaborate on why they may differ.
 to the day and hour of your forecast. You must filter such measurements out, i.e. they cannot
 be used to compute the forecast. Feel free to use the template below to solve the assignment.*
 
-```{r, echo = FALSE}
+## Kernels
+
+This exercise uses three kernels which are combined to predict the temperatures on a given location and day. We will have a look at those kernels, how they're implemented and how the smooth parameters have been selected. Before that we will have a look at one helper function which is used by the kernels.
+
+### Helper Function
+
+The helper function `min_distance(a, b, ringSize)` calculates the minimal distance between two elements on a discrete Quotient Ring. Let's say we have the two times `03:00` and `23:00`. The closes distance would be `4` hours, not `20:00` hours. We use the function for this example and for calculating the difference between two days as well. The `ringSize` thus ist `24` and `356` (we ignore all teh special cases we haev about years and times, like leap seconds). The function uses two applies to handle the calculcation of a given element `a` with `1:n` elements of `b`. The `pmin()` function is parallelized, so it's somewhat fast (we're still using R in the end).
+
+```{r, echo = TRUE}
 
 ################################################################################
 # Kernel Methods
@@ -63,16 +70,24 @@ min_distance = function(a, b, ringSize) {
   return(pmin(boundOne, boundTwo))
 }
 
+```
+
+### Kernel Implementation
+
+The following code shows the implementation of the three kernels. Each of them takes two elements, where `b` can be of size `1:n` like the `min_distance(a, b, ringSize)` function for faster computation. Each kernel takes as well a `smoothing` parameter and returns the results using the Gaussian Kernel.
+
+- The `kernel_gauss_distance` calculates the distance between two points using the *haversine method*.
+- The `kernel_gauss_day` calcualtes the difference between two days. It ignores the year (as we use the cycical behavior and do not count in any long term climate changes) and measures the distance using the `min_distance(a, b, ringSize)` function which results in values between `(0, 183)`.
+- The `kernel_gauss_hour` calculates the difference between two times on a day. It ignores the day (again, as we are intersted in teh cyclical behavior) and measures the distance using the `min_distance(a, b, ringSize)` function which results in values between `(0, 12)`.
+
+```{r, echo = TRUE}
 
 ## Kernels
 ## The definition for the Guassian Kernel is taken from the slides, page 6.
 
 kernel_gauss_distance = function(pointA, pointB, smoothing) {
+  
   # Use distHaversine() as a help
-  # Needed as distHaversine does not operate on dataframes with more than two
-  # columns
-  # latitude
-  # longitude
   m = cbind(pointB$longitude, pointB$latitude)
   u = distHaversine(m, c(pointA$longitude, pointA$latitude))
   u = u / smoothing
@@ -104,6 +119,19 @@ kernel_gauss_hour = function (hourA, hourB, smoothing) {
   return(exp(-(u^2)))
 }
 
+```
+
+
+### Smoothing Parameters
+
+To receive reasonable values for the smoothing parameters we first define some range in which we actually want to consider features. While this is easy for the date and time (one year and one day) it's not that obvious for the distance. We choose `2` for latitude and longitude. Then we adjusted the smoothing parameter that it barely covers the range (so that the features farthest apart barely get a value `> 0`). From that point onwards we decrease the area to look for, thus making smoothing parameter smaller. We end up with some reasonable values that seem to give a good result.
+
+The following plots show the three kernels and their smoothing parameters. They show, which values around the point to predict (always in teh center) are taken in to account based on the percentage shown on the y-axis.
+
+We end up with a distance smoothing parameter around `5000` which is basically a radius of 5 kilometers. For the day/time we have a smoothing parameter of `7`, which is interestingly exactly one week. For the date we have a smoothing parameter of `26` which is close to one month. 
+
+```{r, echo = FALSE}
+
 plot_values_distance = list(latitude = seq(from = 49, to = 51, by = 0.01),
                             longitude = seq(from = 49, to = 51, by = 0.01))
 
@@ -120,7 +148,8 @@ plot_values_hour =
                 "08:00:00", "09:00:00", "10:00:00", "11:00:00",
                 "12:00:00", "13:00:00", "14:00:00", "15:00:00",
                 "16:00:00", "17:00:00", "18:00:00", "19:00:00",
-                "20:00:00", "21:00:00", "22:00:00", "24:00:00"))
+                "20:00:00", "21:00:00", "22:00:00", "23:00:00",
+                "24:00:00"))
 
 compare_value_distance = list(latitude = 50, longitude = 50)
 compare_value_day = list(date = "2018-07-01")
@@ -131,13 +160,15 @@ h_distance = 5000  # 5000
 h_date = 7 # 7
 h_time = 0.5 # 0.5
 
-distances = kernel_gauss_distance(compare_value_distance, plot_values_distance, h_distance)
+distances =kernel_gauss_distance(compare_value_distance,
+                                 plot_values_distance, h_distance)
 days = kernel_gauss_day(compare_value_day, plot_values_day, h_date)
 hours = kernel_gauss_hour(compare_value_hour, plot_values_hour, h_time)
 
 # Need to be continuous for plotting
 plot_values_day = as.numeric(as.Date(plot_values_day$date))
-plot_values_hour = as.numeric(strptime(plot_values_hour$time, format = "%H:%M:%S"))
+plot_values_hour =
+  as.numeric(strptime(plot_values_hour$time, format = "%H:%M:%S"))
 
 # Dataframes for plotting
 plot_data_frame_distance = data.frame(plot_values_distance$latitude, distances)
@@ -153,23 +184,27 @@ ggplot(plot_data_frame_distance) +
                 colour = "Distance (smoothing = 5000)")) +
   #geom_point(aes(x = plot_values_distance$latitude, y = distances),
   #           colour = "orange") +
-  labs(title = "Gaussian Kernel Cruve With Selected Smoothing Factor", y = "Kernel Output",
+  labs(title = "Gaussian Kernel Cruve With Selected Smoothing Factor",
+       y = "Kernel Output",
        x = "Distance", color = "Legend") +
   scale_color_manual(values = c("orange"))
   
 ggplot(plot_data_frame_day) +
-  geom_line(aes(x = plot_values_day, y = days, colour = "Day (smoothing = 7)")) +
+  geom_line(aes(x = plot_values_day,
+                y = days, colour = "Day (smoothing = 7)")) +
   #geom_point(aes(x = plot_values_day, y = days), colour = "blue") #+
-  labs(title = "Gaussian Kernel Cruve With Selected Smoothing Factor", y = "Kernel Output",
+  labs(title = "Gaussian Kernel Cruve With Selected Smoothing Factor",
+       y = "Kernel Output",
        x = "Day", color = "Legend") +
   scale_color_manual(values = c("blue"))
   
 ggplot(plot_data_frame_hour) +
   geom_line(aes(x = plot_values_hour, y = hours,
-                colour = "Hour (smoothing = 26)")) +
+                colour = "Hour (smoothing = 0.5)")) +
   #geom_point(aes(x = plot_values_hour, y = hours), colour = "green")
   #
-  labs(title = "Gaussian Kernel Cruves With Selected Smoothing Factor", y = "Kernel Output",
+  labs(title = "Gaussian Kernel Cruves With Selected Smoothing Factor",
+       y = "Kernel Output",
        x = "Hour", color = "Legend") +
   scale_color_manual(values = c("violet"))
 
@@ -177,8 +212,7 @@ ggplot(plot_data_frame_hour) +
 ```
 
 
-
-```{r, echo = FALSE, eval = TRUE}
+```{r, echo = FALSE}
 
 kernel_sum = function(A, B, h_distance, h_date, h_time) {
   return(
@@ -217,7 +251,8 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
             "08:00:00", "09:00:00", "10:00:00", "11:00:00",
             "12:00:00", "13:00:00", "14:00:00", "15:00:00",
             "16:00:00", "17:00:00", "18:00:00", "19:00:00",
-            "20:00:00", "21:00:00", "22:00:00", "23:00:00", "24:00:00")
+            "20:00:00", "21:00:00", "22:00:00", "23:00:00",
+            "24:00:00")
   
   # Temperatures to predict
   temp = vector(length=length(times))
@@ -258,7 +293,6 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
 
 set.seed(1234567890)
 
-
 # Linkoeping
 latitude = 58.410809
 longitude = 15.621373
@@ -266,6 +300,13 @@ date = "2000-05-08"
 
 ```
 
+## Weather Prediction
+
+For the weather prediction we use Linkoeping (`latitude = 58.410809` and `longitude = 15.621373`) and as a date we use `date = "2000-05-08"` which is basically random.
+
+**Comment:** If we select an area or time where we basically have no datapoints, all kernel functions return only `0`, so their sum is zero as well. Dividing by zero is undefined and thus results in NA's. **End Comment**
+
+The following plot shows the weather prediction, we include the predictions for the sum and the product of the three kernels. We observe that the weather prediction seems to work better with the product of the three kernels as the sum struggles in adjusting to the daily differences in temperature. We can as well see that in general the prediction is reasonable (it's colder at nights) and the temperatured for Mai seems reasonable (maybe not that much for the sum, but that's okay as it's not a good model).
 
 ```{r, echo = FALSE}
 
@@ -274,7 +315,9 @@ pred_temp_sum = predict_weather(latitude, longitude, date, "sum")
 pred_temp_prod = predict_weather(latitude, longitude, date, "prod")
 
 plot_data_frame =
-  data.frame(pred_temp_sum$times, pred_temp_sum$temp, pred_temp_prod$temp)
+  data.frame(as.POSIXct(paste(date ,pred_temp_sum$times),
+                        format = "%Y-%m-%d %H:%M"),
+             pred_temp_sum$temp, pred_temp_prod$temp)
 colnames(plot_data_frame) = c("hour", "predWithSum", "predWithProd")
 
 ggplot(plot_data_frame) +
@@ -290,13 +333,12 @@ ggplot(plot_data_frame) +
 
 ```
 
-
-
 # Support Vector Machines
 
 **Task:**
 
 Use the function ksvm from the R package kernlab to learn a SVM for classifying the spam dataset that is included with the package. Consider the radial basis function kernel (also known as Gaussian) with a width of 0.05. For the C parameter, consider values 0.5, 1 and 5. This implies that you have to consider three models.
+
 - Perform model selection, i.e. select the most promising of the three models (use any method of your choice except cross-validation or nested cross-validation).
 - Estimate the generalization error of the SVM selected above (use any method of your choice except cross-validation or nested cross-validation).
 - Produce the SVM that will be returned to the user, i.e. show the code.
@@ -336,6 +378,8 @@ error_svm_5 = 1 - sum(diag(cm_svm_5)/sum(cm_svm_5))
 
 ```
 
+## Model Selection by Generalization Error
+
 The confusion matrices look like this (C = 0.5, C = 1, C = 5):
 
 ```{r, echo = FALSE}
@@ -356,8 +400,11 @@ print(error_svm_5)
 
 ```
 
+Therefore we select the model where ```C = 5```. It doesn't really make sense to select a model just based on the training data, that why the two steps were combined and the generalization error was considered using the validation data set.
 
-Therefor we select the model where ```C = 5```.
+## Produce the SVM
+
+**Comment:** Actually no idea what is meant by that.
 
 ```{r, echo = FALSE}
 
@@ -365,10 +412,11 @@ print(model_svm_5)
 
 ```
 
+## C Parameter
 
 C defines the cost of the constraint violation penalty. The default value is set
-to 1 and it is an factor added to the error function. Thos means, for ```C = 0.5```
-the errors a halved and for ```C = 5``` they are five times as large. Keep in
+to 1 and it is an factor added to the error function. This means, for ```C = 0.5```
+the errors are halved and for ```C = 5``` they are five times as large. Keep in
 mind that we also have $\epsilon$ which defines the threshold, when an error is
 applied. C must always be greater than 0, otherwise there would never be an error.
 Normally C and $\epsilon$ are selected by Cross-Validation.

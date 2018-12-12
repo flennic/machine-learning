@@ -84,7 +84,7 @@ prediction_deviance_train =
 prediction_deviance_test =
   predict(decisionTree_deviance, newdata = test, type = "class")
 
-predictiona_gini_train =
+prediction_gini_train =
   predict(decisionTree_gini, newdata = train, type = "class")
 prediction_gini_test =
   predict(decisionTree_gini, newdata = test, type = "class")
