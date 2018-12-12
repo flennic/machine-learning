@@ -67,14 +67,14 @@ kernel_gauss_distance = function(pointA, pointB, smoothing) {
 }
 
 kernel_gauss_day = function(dayA, dayB, smoothing) {
-  u = as.numeric(as.Date(dayA$date)-as.Date(dayB$date))
+  u = abs(as.numeric(as.Date(dayA$date)-as.Date(dayB$date)))
   u = u / smoothing
   return(exp(-(u^2)))
 }
 
 kernel_gauss_hour = function (hourA, hourB, smoothing) {
-  u = as.numeric(difftime(strptime(hourA$time, format = "%H:%M:%S"),
-                          strptime(hourB$time, format = "%H:%M:%S")))
+  u = abs(as.numeric(difftime(strptime(hourA$time, format = "%H:%M:%S"),
+                          strptime(hourB$time, format = "%H:%M:%S"))))
   u = u / smoothing
   return(exp(-(u^2)))
 }
@@ -100,13 +100,13 @@ compare_value_day = list(date = "2013-07-01")
 compare_value_hour = list(time = "12:30:00")
 
 # 5000
-distances = kernel_gauss_distance(compare_value_distance, plot_values_distance, 5000)
+distances = kernel_gauss_distance(compare_value_distance, plot_values_distance, 1000000)
 
 # 7
-days = kernel_gauss_day(compare_value_day, plot_values_day, 7)
+days = kernel_gauss_day(compare_value_day, plot_values_day, 700)
 
 # 26
-hours = kernel_gauss_hour(compare_value_hour, plot_values_hour, 26)
+hours = kernel_gauss_hour(compare_value_hour, plot_values_hour, 2600)
 
 # Need to be continuous for plotting
 plot_values_day = as.numeric(as.Date(plot_values_day$date))
@@ -196,9 +196,9 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
   temp = vector(length=length(times))
   
   # Smoothing factors
-  h_distance = 10
-  h_date = 10
-  h_time = 10
+  h_distance = 1000000 # 5000
+  h_date = 700 # 7
+  h_time = 2600 # 26
   
   # Prediction for each temp to predict
   for (i in 1:length(times)) {
@@ -231,7 +231,6 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
     # Let's save this predicted temperature
     temp[i] = y
   }
-  
   return(data.frame(times, temp))
 }
 
@@ -249,10 +248,10 @@ plot_data_frame =
 colnames(plot_data_frame) = c("hour", "predWithSum", "predWithProd")
 
 ggplot(plot_data_frame) +
-  geom_line(aes(x = hour, y = predWithSum,
+  geom_line(aes(x = hour, y = predWithSum, group = 1,
                 colour = "Kernel Regression (Sum)")) +
   geom_point(aes(x = hour, y = predWithSum), colour = "orange") +
-  geom_line(aes(x = hour, y = predWithProd,
+  geom_line(aes(x = hour, y = predWithProd, group = 1,
                 colour = "Kernel Regression (Prod)")) +
   geom_point(aes(x = hour, y = predWithProd), colour = "blue") +
   labs(title = "Temperature Prediction with Kernel Regression (Sum and Prod)",
