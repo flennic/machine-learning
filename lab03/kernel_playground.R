@@ -1,5 +1,13 @@
 library(geosphere)
 
+min_distance = function(a, b, ringSize) {
+  
+  boundOne = sapply(b, FUN = function(x) abs(a - x))
+  boundTwo = sapply(b, FUN = function(x) abs(a+ringSize-x))
+  
+  return(pmin(boundOne, boundTwo))
+}
+
 kernel_gauss_distance = function(pointA, pointB, smoothing) {
   # Use distHaversine() as a help
   # Needed as distHaversine does not operate on dataframes with more than two
@@ -12,15 +20,40 @@ kernel_gauss_distance = function(pointA, pointB, smoothing) {
 }
 
 kernel_gauss_day = function(dayA, dayB, smoothing) {
-  u = abs(as.numeric(as.Date(dayA$date)-as.Date(dayB$date)))
+  #u = abs(as.numeric(as.Date(dayA$date)-as.Date(dayB$date)))
+  #u = (as.numeric(as.Date(dayA$date)) %% 365) +
+  #  (as.numeric(as.Date(dayB$date)) %% 365)
+  # We need a new line for this as R is TO FUCKING STUPID to calculate 367 %%
+  # 365. R thinks, it's 367. May god have mercy with this language.
+  #u = u %% 365
+  
+  dayA_in_days = as.numeric(strftime(as.Date(dayA$date), '%j'))
+  dayB_in_days = as.numeric(strftime(as.Date(dayB$date), '%j'))
+  
+  u = min_distance(dayA_in_days, dayB_in_days, 365)
   u = u / smoothing
   return(exp(-(u^2)))
 }
 
 kernel_gauss_hour = function (hourA, hourB, smoothing) {
-  # Smoothing around 5
-  u = abs(as.numeric(difftime(strptime(hourA$time, format = "%H:%M:%S"),
-                          strptime(hourB$time, format = "%H:%M:%S"))))
+  #u = abs(as.numeric(difftime(strptime(hourA$time, format = "%H:%M:%S"),
+  #                        strptime(hourB$time, format = "%H:%M:%S"))))
+  
+  #hourA_in_h = as.numeric(difftime(strptime(hourA$time, format = "%H:%M:%S"),
+  #                                 strptime("00:00:00", format = "%H:%M:%S")))
+  #hourB_in_h = as.numeric(difftime(strptime(hourB$time, format = "%H:%M:%S"),
+  #                                 strptime("00:00:00", format = "%H:%M:%S")))
+  hourA_in_h = sapply(hourA$time, FUN = function(x)
+    as.numeric(difftime(strptime(x, format = "%H:%M:%S"),
+                        strptime("00:00:00", format = "%H:%M:%S"))))
+  
+  hourB_in_h = sapply(hourB$time, FUN = function(x)
+    as.numeric(difftime(strptime(x, format = "%H:%M:%S"),
+                        strptime("00:00:00", format = "%H:%M:%S"))))
+  
+  #u = sapply()
+  
+  u = min_distance(hourA_in_h, hourB_in_h, 24)
   u = u / smoothing
   return(exp(-(u^2)))
 }
@@ -65,9 +98,9 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
   temp = vector(length=length(times))
   
   # Smoothing factors
-  h_distance = 30000 #1000000 # 5000
-  h_date = 2#700 # 7
-  h_time = 5#2600 # 26
+  h_distance = 5000
+  h_date = 7
+  h_time = 0.5
   
   # Prediction for each temp to predict
   for (i in 1:length(times)) {
@@ -106,13 +139,13 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
 
 set.seed(1234567890)
 
-# Linköping
+# Linkoeping
 latitude = 58.410809
 longitude = 15.621373
 
-# Berlin
-b_latitude = 52.520008
-b_longitude = 13.404954
+# Kiruna
+b_latitude = 67.8558
+b_longitude = 20.2253
 
 #a <- 17.6935 #58.4274 # The point to predict (up to the students)
 #b <- 59.9953 #14.826
@@ -120,7 +153,9 @@ date <- "2000-05-08" # The date to predict (up to the students)
 
 # Students' code here
 
-pred = predict_weather(latitude, longitude, date, "prod")
-#pred2 = predict_weather(b_latitude, b_longitude, date, "prod")
+pred_lin = predict_weather(latitude, longitude, date, "prod")
+pred_lin2 = predict_weather(latitude, longitude, date, "sum")
+pred_kir = predict_weather(b_latitude, b_longitude, date, "prod")
+pred_kir2 = predict_weather(b_latitude, b_longitude, date, "sum")
 
 #plot(temp, type="o")
