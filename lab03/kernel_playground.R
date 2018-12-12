@@ -1,7 +1,10 @@
+library(geosphere)
+
 kernel_gauss_distance = function(pointA, pointB, smoothing) {
   # Use distHaversine() as a help
   # Needed as distHaversine does not operate on dataframes with more than two
   # columns
+  # Smooting factor should be > 10000
   m = cbind(pointB$latitude, pointB$longitude)
   u = distHaversine(m, c(pointA$latitude, pointA$longitude))
   u = u / smoothing
@@ -9,14 +12,15 @@ kernel_gauss_distance = function(pointA, pointB, smoothing) {
 }
 
 kernel_gauss_day = function(dayA, dayB, smoothing) {
-  u = as.numeric(as.Date(dayA$date)-as.Date(dayB$date))
+  u = abs(as.numeric(as.Date(dayA$date)-as.Date(dayB$date)))
   u = u / smoothing
   return(exp(-(u^2)))
 }
 
 kernel_gauss_hour = function (hourA, hourB, smoothing) {
-  u = as.numeric(difftime(strptime(hourA$time, format = "%H:%M:%S"),
-                          strptime(hourB$time, format = "%H:%M:%S")))
+  # Smoothing around 5
+  u = abs(as.numeric(difftime(strptime(hourA$time, format = "%H:%M:%S"),
+                          strptime(hourB$time, format = "%H:%M:%S"))))
   u = u / smoothing
   return(exp(-(u^2)))
 }
@@ -61,7 +65,7 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
   temp = vector(length=length(times))
   
   # Smoothing factors
-  h_distance = 10
+  h_distance = 10000
   h_date = 10
   h_time = 10
   
@@ -77,25 +81,24 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
     
     if (u_type == "sum") {
       # Parameters: A, B, h_distance, h_date, h_time
-      k_sum = kernel_sum(user_data_point, st, h_distance, h_distance, h_time)
-      # Now that we have the kernel value, we can calcuate the actual prediction
-      # Formula taken from slide 8 from 
-      # "Histogram, Moving Window, and Kernel Regression""
-      y = k_sum %*% st$air_temperature/sum(k_sum)
+      kernel = kernel_sum(user_data_point, st, h_distance, h_date, h_time)
     }
     else if (u_type == "prod") {
       # Parameters: A, B, h_distance, h_date, h_time
-      k_prod =
-        kernel_product(user_data_point, st, h_distance, h_distance, h_time)
+      kernel =
+        kernel_product(user_data_point, st, h_distance, h_date, h_time)
     }
     else {
-      stop("Du Nasenbär!")
+      stop("Du Nasenbaer!")
     }
     
-    ## Calculate the kernel sum and product
+    # Now that we have the kernel value, we can calcuate the actual prediction
+    # Formula taken from slide 8 from 
+    # "Histogram, Moving Window, and Kernel Regression""
+    y = kernel %*% st$air_temperature/sum(kernel)
     
-    
-    
+    # Let's save this predicted temperature
+    temp[i] = y
   }
   
   return("lala")

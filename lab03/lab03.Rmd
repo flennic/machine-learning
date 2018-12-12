@@ -47,13 +47,11 @@ Compare the results obtained in both cases and elaborate on why they may differ.
 to the day and hour of your forecast. You must filter such measurements out, i.e. they cannot
 be used to compute the forecast. Feel free to use the template below to solve the assignment.*
 
-```{r, echo = FALSE, eval = TRUE}
+```{r, echo = FALSE}
 
 ################################################################################
 # Kernel Methods
 ################################################################################
-
-# Helper functions
 
 ## Kernels
 ## The definition for the Guassian Kernel is taken from the slides, page 6.
@@ -80,6 +78,83 @@ kernel_gauss_hour = function (hourA, hourB, smoothing) {
   u = u / smoothing
   return(exp(-(u^2)))
 }
+
+plot_values_distance = list(latitude = seq(from = 49, to = 51, by = 0.01),
+                            longitude = seq(from = 49, to = 51, by = 0.01))
+
+plot_values_day =
+  list(date = c("2013-01-01", "2013-01-16", "2013-02-01", "2013-02-16",
+                "2013-03-01", "2013-03-16", "2013-04-01", "2013-04-16",
+                "2013-05-01", "2013-05-16", "2013-06-01", "2013-06-16",
+                "2013-07-01", "2013-07-16", "2013-08-01", "2013-08-16",
+                "2013-09-01", "2013-09-16", "2013-10-01", "2013-10-16",
+                "2013-11-01", "2013-11-16", "2013-12-01", "2013-12-16"))
+
+plot_values_hour = list(time = c("04:00:00", "05:00:00", "06:00:00", "07:00:00", "08:00:00",
+                    "09:00:00", "10:00:00", "11:00:00", "12:00:00", "13:00:00",
+                    "14:00:00", "15:00:00", "16:00:00", "17:00:00", "18:00:00",
+                    "19:00:00", "20:00:00", "21:00:00", "22:00:00", "24:00:00"))
+
+compare_value_distance = list(latitude = 50, longitude = 50)
+compare_value_day = list(date = "2013-07-01")
+compare_value_hour = list(time = "12:30:00")
+
+# 5000
+distances = kernel_gauss_distance(compare_value_distance, plot_values_distance, 5000)
+
+# 7
+days = kernel_gauss_day(compare_value_day, plot_values_day, 7)
+
+# 26
+hours = kernel_gauss_hour(compare_value_hour, plot_values_hour, 26)
+
+# Need to be continuous for plotting
+plot_values_day = as.numeric(as.Date(plot_values_day$date))
+plot_values_hour = as.numeric(strptime(plot_values_hour$time, format = "%H:%M:%S"))
+
+#plot_data_frame_distance = data.frame(plot_values_distance$latitude, distances,
+#                             plot_values_day$date, days,
+#                             plot_values_hour$time, hours)
+
+plot_data_frame_distance = data.frame(plot_values_distance$latitude, distances)
+plot_data_frame_day = data.frame(plot_values_day, days)
+plot_data_frame_hour = data.frame(plot_values_hour, hours)
+
+```
+
+```{r, echo = FALSE}
+
+ggplot(plot_data_frame_distance) +
+  geom_line(aes(x = plot_values_distance$latitude, y = distances,
+                colour = "Distance (smoothing = 5000)")) +
+  #geom_point(aes(x = plot_values_distance$latitude, y = distances),
+  #           colour = "orange") +
+  labs(title = "Gaussian Kernel Cruve With Selected Smoothing Factors", y = "Kernel Output",
+       x = "Distance", color = "Legend") +
+  scale_color_manual(values = c("orange"))
+  
+ggplot(plot_data_frame_day) +
+  geom_line(aes(x = plot_values_day, y = days, colour = "Day (smoothing = 7)")) +
+  #geom_point(aes(x = plot_values_day, y = days), colour = "blue") #+
+  labs(title = "Gaussian Kernel Cruve With Selected Smoothing Factors", y = "Kernel Output",
+       x = "Day", color = "Legend") +
+  scale_color_manual(values = c("blue"))
+  
+ggplot(plot_data_frame_hour) +
+  geom_line(aes(x = plot_values_hour, y = hours,
+                colour = "Hour (smoothing = 26)")) +
+  #geom_point(aes(x = plot_values_hour, y = hours), colour = "green")
+  #
+  labs(title = "Gaussian Kernel Cruves With Selected Smoothing Factors", y = "Kernel Output",
+       x = "Hour", color = "Legend") +
+  scale_color_manual(values = c("violet"))
+
+
+```
+
+
+
+```{r, echo = FALSE, eval = TRUE}
 
 kernel_sum = function(A, B, h_distance, h_date, h_time) {
   return(
