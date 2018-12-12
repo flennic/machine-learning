@@ -69,14 +69,26 @@ kernel_gauss_distance = function(pointA, pointB, smoothing) {
 }
 
 kernel_gauss_day = function(dayA, dayB, smoothing) {
-  u = abs(as.numeric(as.Date(dayA$date)-as.Date(dayB$date)))
+  #u = abs(as.numeric(as.Date(dayA$date)-as.Date(dayB$date)))
+  u = (as.numeric(as.Date(dayA$date)) %% 365) +
+    (as.numeric(as.Date(dayB$date)) %% 365)
+  # We need a new line for this as R is TO FUCKING STUPID to calculate 367 %%
+  # 365. R thinks, it's 367. May god have mercy with this language.
+  u = u %% 365 
   u = u / smoothing
   return(exp(-(u^2)))
 }
 
 kernel_gauss_hour = function (hourA, hourB, smoothing) {
-  u = abs(as.numeric(difftime(strptime(hourA$time, format = "%H:%M:%S"),
-                          strptime(hourB$time, format = "%H:%M:%S"))))
+  #u = abs(as.numeric(difftime(strptime(hourA$time, format = "%H:%M:%S"),
+  #                        strptime(hourB$time, format = "%H:%M:%S"))))
+  
+  hourA_in_h = as.numeric(difftime(hourA$time ,
+                                   strptime("00:00:00", format = "%H:%M:%S")))
+  hourB_in_h = as.numeric(difftime(hourB$time ,
+                                   strptime("00:00:00", format = "%H:%M:%S")))
+  diff = (hourA_in_h + hourB_in_h) %% 24
+  
   u = u / smoothing
   return(exp(-(u^2)))
 }
@@ -98,13 +110,13 @@ plot_values_hour = list(time = c("04:00:00", "05:00:00", "06:00:00", "07:00:00",
                     "19:00:00", "20:00:00", "21:00:00", "22:00:00", "24:00:00"))
 
 compare_value_distance = list(latitude = 50, longitude = 50)
-compare_value_day = list(date = "2013-07-01")
+compare_value_day = list(date = "2018-07-01")
 compare_value_hour = list(time = "12:30:00")
 
 # Smoothing factors
-h_distance = 30000 #1000000 # 5000
-h_date = 2#700 # 7
-h_time = 5#2600 # 26
+h_distance = 300000 #1000000 # 5000
+h_date = 7 #700 # 7
+h_time = 50 #2600 # 26
 
 # 5000
 distances = kernel_gauss_distance(compare_value_distance, plot_values_distance, h_distance)
