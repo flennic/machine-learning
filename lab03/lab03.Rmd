@@ -3,13 +3,13 @@ title: "Lab 3 Block 1: Kernel Meethods and Neural Networks"
 author: "Maximilian Pfundstein"
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
-    toc: true
-    toc_depth: 3
-    number_sections: true
   html_document:
     df_print: paged
     toc_float: true
+    number_sections: true
+  pdf_document:
+    toc: true
+    toc_depth: 3
     number_sections: true
 ---
 
@@ -124,11 +124,11 @@ kernel_gauss_hour = function (hourA, hourB, smoothing) {
 
 ### Smoothing Parameters
 
-To receive reasonable values for the smoothing parameters we first define some range in which we actually want to consider features. While this is easy for the date and time (one year and one day) it's not that obvious for the distance. We choose `2` for latitude and longitude. Then we adjusted the smoothing parameter that it barely covers the range (so that the features farthest apart barely get a value `> 0`). From that point onwards we decrease the area to look for, thus making smoothing parameter smaller. We end up with some reasonable values that seem to give a good result.
+To receive reasonable values for the smoothing parameters we first define some range in which we actually want to consider features. While this is easy for the date and time (one year and one day) it's not that obvious for the distance. We choose `2` for latitude and longitude. Then we adjusted the smoothing parameter that it barely covers the range (so that the features farthest apart barely get a value `> 0`). From that point onwards we decrease/increase the area to look for, thus making smoothing parameter smaller/greater. We end up with some reasonable values that seem to give a good result.
 
-The following plots show the three kernels and their smoothing parameters. They show, which values around the point to predict (always in teh center) are taken in to account based on the percentage shown on the y-axis.
+The following plots show the three kernels and their smoothing parameters. They show, which values around the point to predict (always in the center) are taken in to account based on the percentage shown on the y-axis.
 
-We end up with a distance smoothing parameter around `5000` which is basically a radius of 5 kilometers. For the day/time we have a smoothing parameter of `7`, which is interestingly exactly one week. For the date we have a smoothing parameter of `26` which is close to one month. 
+We end up with a distance smoothing parameter around `150000` which is basically a radius of 150 kilometers. For the hour/time we have a smoothing parameter of `3`, which is around 3 hours. For the date we have a smoothing parameter of `30` which is close to one month. 
 
 ```{r, echo = FALSE}
 
@@ -156,9 +156,9 @@ compare_value_day = list(date = "2018-07-01")
 compare_value_hour = list(time = "12:30:00")
 
 # Smoothing factors
-h_distance = 5000  # 5000
-h_date = 7 # 7
-h_time = 0.5 # 0.5
+h_distance = 150000  # 5000 #150000
+h_date = 30 # 7#30
+h_time = 3 # 0.5 #3
 
 distances =kernel_gauss_distance(compare_value_distance,
                                  plot_values_distance, h_distance)
@@ -181,7 +181,7 @@ plot_data_frame_hour = data.frame(plot_values_hour, hours)
 
 ggplot(plot_data_frame_distance) +
   geom_line(aes(x = plot_values_distance$latitude, y = distances,
-                colour = "Distance (smoothing = 5000)")) +
+                colour = "Distance (smoothing = 150000)")) +
   #geom_point(aes(x = plot_values_distance$latitude, y = distances),
   #           colour = "orange") +
   labs(title = "Gaussian Kernel Cruve With Selected Smoothing Factor",
@@ -191,7 +191,7 @@ ggplot(plot_data_frame_distance) +
   
 ggplot(plot_data_frame_day) +
   geom_line(aes(x = plot_values_day,
-                y = days, colour = "Day (smoothing = 7)")) +
+                y = days, colour = "Day (smoothing = 30)")) +
   #geom_point(aes(x = plot_values_day, y = days), colour = "blue") #+
   labs(title = "Gaussian Kernel Cruve With Selected Smoothing Factor",
        y = "Kernel Output",
@@ -200,7 +200,7 @@ ggplot(plot_data_frame_day) +
   
 ggplot(plot_data_frame_hour) +
   geom_line(aes(x = plot_values_hour, y = hours,
-                colour = "Hour (smoothing = 0.5)")) +
+                colour = "Hour (smoothing = 3)")) +
   #geom_point(aes(x = plot_values_hour, y = hours), colour = "green")
   #
   labs(title = "Gaussian Kernel Cruves With Selected Smoothing Factor",
@@ -296,7 +296,8 @@ set.seed(1234567890)
 # Linkoeping
 latitude = 58.410809
 longitude = 15.621373
-date = "2000-05-08"
+#date = "2000-05-08"
+date = "2018-12-14"
 
 ```
 
@@ -352,17 +353,23 @@ Use the function ksvm from the R package kernlab to learn a SVM for classifying 
 
 data(spam)
 n = dim(spam)[1]
-id = sample(1:n, floor(n*0.70))
+set.seed(12345)
+id = sample(1:n, floor(n*0.4))
 train_spam = spam[id,]
-val_spam = spam[-id,]
+id1 = setdiff(1:n, id)
+set.seed(12345)
+id2 = sample(id1, floor(n*0.3))
+val_spam = spam[id2,]
+id3 = setdiff(id1,id2)
+test_spam = spam[id3,]
 
 # Our three models depending on
 model_svm_05 =
-  ksvm(type ~ ., val_spam, kernel = "rbfdot", lambda = 0.05, C = 0.5)
+  ksvm(type ~ ., train_spam, kernel = "rbfdot", kpar = list(sigma = 0.05), C = 0.5)
 model_svm_1 =
-  ksvm(type ~ ., val_spam, kernel = "rbfdot", lambda = 0.05, C = 1)
+  ksvm(type ~ ., train_spam, kernel = "rbfdot", kpar = list(sigma = 0.05), C = 1)
 model_svm_5 =
-  ksvm(type ~ ., val_spam, kernel = "rbfdot", lambda = 0.05, C = 5)
+  ksvm(type ~ ., train_spam, kernel = "rbfdot", kpar = list(sigma = 0.05), C = 5)
 
 model_svm_05_prediction = predict(model_svm_05, newdata = val_spam)
 model_svm_1_prediction = predict(model_svm_1, newdata = val_spam)
@@ -400,15 +407,20 @@ print(error_svm_5)
 
 ```
 
-Therefore we select the model where ```C = 5```. It doesn't really make sense to select a model just based on the training data, that why the two steps were combined and the generalization error was considered using the validation data set.
+Therefore we select the model where ```C = 5```. It doesn't really make sense to select a model just based on the training data, that why the two steps were combined and the generalization error was considered using the validation data set. We use the test data set to actually get a good esimation of our model (holdout).
 
 ## Produce the SVM
 
-**Comment:** Actually no idea what is meant by that.
-
 ```{r, echo = FALSE}
 
+selected_model_prediction = predict(model_svm_5, newdata = test_spam)
+
+cm_selected_model = table(test_spam$type, selected_model_prediction)
+
+error_selected_model = 1 - sum(diag(cm_selected_model)/sum(cm_selected_model))
+
 print(model_svm_5)
+print(paste("Error rate:", error_selected_model))
 
 ```
 
@@ -420,7 +432,6 @@ the errors are halved and for ```C = 5``` they are five times as large. Keep in
 mind that we also have $\epsilon$ which defines the threshold, when an error is
 applied. C must always be greater than 0, otherwise there would never be an error.
 Normally C and $\epsilon$ are selected by Cross-Validation.
-
 
 # Appendix: Source Code
 
