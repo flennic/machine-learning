@@ -1,14 +1,14 @@
 ---
 title: "Computer lab 2 block 2"
 author: "Maximilian Pfundstein (maxpf364)"
-date: "4 December 2018"
+date: "`r Sys.Date()`"
 output:
-  html_document:
-    df_print: paged
-    toc_float: yes
   pdf_document:
     toc: yes
     toc_depth: 3
+  html_document:
+    df_print: paged
+    toc_float: yes
   word_document:
     toc: yes
     toc_depth: '3'
@@ -17,7 +17,7 @@ bibliography: sources.bib
 
 ```{r setup, include=FALSE}
 
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, cache = TRUE)
 library(readxl)
 library(ggplot2)
 library(knitr)
@@ -100,7 +100,8 @@ If both plots are superimposed we can observe that it seems like that mortality 
 # - ...and spline function of Week
 # Don't forget to select the model bei generalized cross-validation
 
-gam_model = gam(formula = Mortality ~ Year + s(Week), family = gaussian(), data = influanza, method="GCV.Cp") 
+gam_model = gam(formula = Mortality ~ Year + s(Week), family = gaussian(),
+                data = influanza, method="GCV.Cp") 
 
 print(gam_model)
 
@@ -115,6 +116,10 @@ $$ Model = \mathcal{N}(\beta_{year} * X_{Year} +S_{week} * X_{week} + \alpha,  \
 **Task:** Plot predicted and observed mortality against time for the fitted model and comment on the quality of the fit. Investigate the output of the GAM model and report which terms appear to be significant in the model. Is there a trend in mortality change from one year to another? Plot the spline component and interpret the plot.
 
 ```{r, echo = FALSE}
+
+################################################################################
+# 1.3) 
+################################################################################
 
 summary(gam_model)
 plot(gam_model)
@@ -134,12 +139,6 @@ ggplot(mortality_values) +
        x = "Time", color = "Legend") +
   scale_color_manual(values = c("blue", "orange"))
 
-```
-
-**Comment:** We can see that the fitted data is actually not performing that bad. It recognized the cyclical trend correctly. The drawback of the smoothing is that the extrem values are not correctly predicted, as those are smoothed out.
-
-```{r, echo = FALSE}
-
 ggplot() +
   geom_line(aes(x=influanza$Week,y=influanza$Mortality,
                          colour=as.factor(influanza$Year))) +
@@ -147,6 +146,8 @@ ggplot() +
        title='Mortality by Week and by Year')
 
 ```
+
+**Comment:** We can see that the fitted data is actually not performing that bad. It recognized the cyclical trend correctly. The drawback of the smoothing is that the extrem values are not correctly predicted, as those are smoothed out.
 
 We observe that the spline curve is following the trend we can observe over the years, with a peak in the beginning/end of the year.
 
@@ -156,11 +157,18 @@ We observe that the spline curve is following the trend we can observe over the 
 
 ```{r, echo = FALSE}
 
+################################################################################
+# 1.4) 
+################################################################################
+
 penalties = seq(from = 0 , to = 20, by = 0.1)
 index = 1
 
+fitted_gam_with_penalties = data.frame()
+
 for (penalty in penalties) {
-  gam_model = gam(formula = Mortality ~ Year + s(Week, sp = penalty),
+  gam_model = gam(formula = Mortality ~ Year +
+                    s(Week, sp = penalty, k = length(unique(influanza$Week))),
                   family = gaussian(), data = influanza, method="GCV.Cp") 
   
   fitted_gam_with_penalties = rbind(fitted_gam_with_penalties,
@@ -183,10 +191,9 @@ ggplot(fitted_gam_with_penalties) +
   geom_line(aes(x = fitted_gam_with_penalties$deviance,
                 y = fitted_gam_with_penalties$df,
                 colour = "Degrees of Freedom/Deviance")) +
-  labs(title = "Deviance VS Degree of Freedom", y = "Degrees of Freedom",
+  labs(title = "Deviance VS Degrees of Freedom", y = "Degrees of Freedom",
        x = "Deviance/DF", color = "Legend") +
   scale_color_manual(values = c("blue", "orange"))
-
 
 ## Create Models for High and Low penalties
 gam_model_low_pen = gam(formula = Mortality ~ Year + s(Week, sp = 0.1),
@@ -209,6 +216,7 @@ ggplot(high_low_df) +
        x = "Time", color = "Legend") +
   scale_color_manual(values = c("blue", "orange", "violet"))
 
+## Observed vs Predicted Mortality
 ggplot(mortality_values) +
   geom_line(aes(x = time, y = observed,
                 colour = "Observed Mortality")) +
@@ -220,12 +228,17 @@ ggplot(mortality_values) +
 
 ```
 
+In the first plot we see, that with an increase in penalty the deviance increases as well. The greater the penalty the simpler is teh model, so this is kind of what we expect. For the plot with a low and high penalty we can see, that the model with a low penalty performs better in the way that it better follows the original trends while the model with the high penalty struggles to catch the individuals trends/spikes.
 
 ## 1.5)
 
 **Task:** Use the model obtained in step 2 and plot the residuals and the influenza values against time (in one plot). Is the temporal pattern in the residuals correlated to the outbreaks of influenza?
 
 ```{r, echo = FALSE}
+
+################################################################################
+# 1.5) 
+################################################################################
 
 time = influanza$Time
 resid = gam_model$residuals
@@ -252,14 +265,22 @@ ggplot(print_data) +
 
 ```{r, echo = FALSE}
 
-gam_model_additive = gam(formula = Mortality ~ Year + s(Week) + Influenza, family = gaussian(), data = influanza, method="GCV.Cp")
+################################################################################
+# 1.6) 
+################################################################################
 
-summary(gam_model)
-plot(gam_model)
+gam_model_additive = gam(formula =
+                         Mortality ~ s(Year, k=length(unique(influanza$Year))) +
+                         s(Week, k=length(unique(influanza))) +
+                         s(Influenza, k=length(unique(influanza$Year))),
+                         family = gaussian(), data = influanza, method="GCV.Cp")
+
+summary(gam_model_additive)
+plot(gam_model_additive)
 
 time = influanza$Time
 observed = influanza$Mortality
-predicted = gam_model_additive$fitted.values
+predicted = fitted(gam_model_additive)
 
 mortality_values = data.frame(time, observed, predicted)
 
@@ -274,7 +295,7 @@ ggplot(mortality_values) +
 
 ```
 
-**TODO:** Is this model better and does the number of influenza influece the mortality?
+Using the new splines in this model concludes in a better model than before. We see that the week and influence are statistically significant while the year is not. Comparing this statement with the provided plots we see, that the year is not capturing any trend, while the week and the influence are capturing the occuring trends.
 
 # 2) High-dimensional method
 
@@ -312,27 +333,82 @@ val_emails = emails[-id,]
 ################################################################################
 
 rownames(train_emails) = 1:nrow(train_emails)
-x = t(train_emails[,-ncol(train_emails)])
-y = train_emails[[ncol(train_emails)]]
-mydata = list(x=x ,y=as.factor(y), geneid = as.character(1:nrow(x)),
-              genenames = rownames(x))
+x_train = t(train_emails[,-ncol(train_emails)])
+y_train = train_emails[[ncol(train_emails)]]
+mydata_train = list(x=x_train ,y=as.factor(y_train), geneid =
+                      as.character(1:nrow(x_train)),
+              genenames = rownames(x_train))
 
-nsc_model = pamr.train(mydata, threshold=seq(0, 4, 0.1))
-nsc_model_cv = pamr.cv(nsc_model, mydata)
+nsc_model = pamr.train(mydata_train, threshold=seq(0, 4, 0.1))
+nsc_model_cv = pamr.cv(nsc_model, mydata_train)
+
+genes = pamr.listgenes(nsc_model, mydata_train, threshold = 2.5)
 
 ```
 
 ```{r, echo = FALSE}
 
-pamr.plotcen(nsc_model, mydata, threshold = 1)
-pamr.plotcen(nsc_model, mydata, threshold = 2.5)
+pamr.plotcen(nsc_model, mydata_train, threshold = 2.5)
 
 print(nsc_model_cv)
 pamr.plotcv(nsc_model_cv)
 
 ```
 
+The amount of features selected is:
 
+```{r, echo = FALSE}
+
+nrow(genes)
+
+```
+
+And the 10 most contributing features are:
+
+```{r, echo = FALSE}
+
+kable(colnames(emails)[as.numeric(genes[1:10, 1])])
+
+```
+
+We have the following confuses matrices.
+
+```{r, echo = FALSE}
+
+rownames(val_emails) = 1:nrow(val_emails)
+x_val = t(val_emails[,-ncol(val_emails)])
+y_val = val_emails[[ncol(val_emails)]]
+#mydata_val = list(x=x_val ,y=as.factor(y_val),
+# geneid = as.character(1:nrow(x_val)),
+#              genenames = rownames(x_val))
+
+pred_train = pamr.predict(nsc_model, newx = x_train, threshold = 2.5)
+pred_val = pamr.predict(nsc_model, newx = x_val, threshold = 2.5)
+
+matrix_train = table(train_emails$Conference, pred_train)
+matrix_val = table(val_emails$Conference, pred_val)
+
+kable(matrix_train)
+kable(matrix_val)
+
+```
+
+And therefor the following error rates:
+
+```{r, echo = FALSE}
+
+error_train_nsc = 1 - sum(diag(matrix_train)/sum(matrix_train))
+error_val_scn = 1 - sum(diag(matrix_val)/sum(matrix_val))
+
+print(paste("Error Train:", error_train_nsc))
+print(paste("Error Validation:", error_val_scn))
+
+```
+
+**TODO:**
+
+- Threshold?
+- Interpretation of the Centroid Plots!
 
 ## 2.2)
 
@@ -345,39 +421,95 @@ Compare the results of these models with the results of the nearest shrunken cen
 
 ```{r, echo = FALSE}
 
+################################################################################
+# 2.3) 
+################################################################################
+
 # Elastic Net
 
 # Predictor Variables. The -1 removes the intercept component
-x = model.matrix(Conference ~ ., train_emails)[,-1]
+x_test = as.matrix(train_emails[, -ncol(train_emails)])
+x_val = as.matrix(val_emails[, -ncol(val_emails)])
 
 # Outcome variable
-y = train_emails$Conference
+y_test = train_emails$Conference
+y_val = val_emails$Conference
 
-model_elastic_net = glmnet(x, y, alpha = 0.5, family = "binomial")
+model_elastic_net = cv.glmnet(x = x_test, y = y_test, alpha = 0.5,
+                              family = "binomial")
 
 # Support vector machine with "vanilladot" kernel.
 # Vanilladot means "Linear Kernel Function"
-#model_svm = svm(x = x, y = y, kernel = "linear")
-model_svm = ksvm(Conference ~ ., train_emails, kernel = "vanilladot")
+# set scale = FALSE to prevent "variable(s) `' constant. Cannot scale data.""
+model_svm = ksvm(x = x_test, y = y_test, kernel = "vanilladot", scale = FALSE)
+
+# Predictions
+pred_val_elastic = predict(model_elastic_net, newx = x_val, type = "class")
+pred_val_svm = predict(model_svm, x_val, type = "response")
+
+matrix_elastic = table(y_val, t(pred_val_elastic))
+matrix_svm = table(y_val, pred_val_svm)
+
+kable(matrix_elastic)
+kable(matrix_svm)
 
 ```
 
 ```{r, echo = FALSE}
 
-print(model_elastic_net)
+error_elastic = 1 - sum(diag(matrix_elastic)/sum(matrix_elastic))
+error_svm = 1 - sum(diag(matrix_svm)/sum(matrix_svm))
+
+print(paste("Error Elastic:", error_elastic))
+print(paste("Error SVM:", error_svm))
+
+```
+
+Data about the elastic model:
+
+```{r, echo = FALSE}
+
+#print(model_elastic_net)
 summary(model_elastic_net)
 plot(model_elastic_net)
 
 ```
 
+Data bout the svm model:
 
+```{r, echo = FALSE}
+
+print(model_svm)
+summary(model_svm)
+#plot(model_svm)
+
+```
+
+To get an overview over all trained model errors, let's have a look at the following table. The error rates are based on the test/validation data set, not on the train data set.
+
+```{r, echo = FALSE}
+
+plot_table = data.frame(
+  NSCM_error = error_val_scn,
+  Elastic_error = error_elastic,
+  SVM_error = error_svm
+)
+
+kable(plot_table)
+
+```
+
+Therefore the best model is the SVM model as it has the smallest error. We shoudk keep in mind that if works with all features while NSCM uses less features. As the dataset is small and the computations are done quickly, the benefit of little features vanishes and we still take the SVM model. The elastic error is just to high to be considered.
 
 ## 2.3)
 
-Implement Benjamini-Hochberg method for the original data, and use t.test() for computing p-values. Which features correspond to the rejected hypotheses? Interpret the result.
-
+**Task:** Implement Benjamini-Hochberg method for the original data, and use t.test() for computing p-values. Which features correspond to the rejected hypotheses? Interpret the result.
 
 ```{r, echo = FALSE}
+
+################################################################################
+# 2.3) 
+################################################################################
 
 # Orignal Data Set: emails
 # H0: Feature has effect on Conference
@@ -395,11 +527,13 @@ q_value = 0.05
 feature_names = c()
 p_values = c()
 
+# For each data point calculate the p_value
+
 for (i in 1:(ncol(emails)-1)) {
   colname = colnames(emails)[i]
   c_formula = paste(sep = "", colname, " ~ Conference")
-  # one.sided, less, greater
-  p_value = t.test(as.formula(c_formula), data = emails, alternative="two.sided")
+  p_value = t.test(as.formula(c_formula), data = emails,
+                   alternative="two.sided")
   
   feature_names = c(feature_names, colname)
   p_values = c(p_values, p_value$p.value)
@@ -407,13 +541,14 @@ for (i in 1:(ncol(emails)-1)) {
 
 ## 2)
 
+# Sorting
 bh_entries = data.frame(feature_names, p_values)
 bh_entries = bh_entries[order(bh_entries$p_values, decreasing = FALSE),]
 rownames(bh_entries) = NULL
 
-
 ## 3)
 
+# Define the function for the CV-Score
 getCV_BH = function(i, m, Q) {
   return(i/m*Q)
 }
@@ -421,22 +556,32 @@ getCV_BH = function(i, m, Q) {
 cv_scores = c()
 
 for (j in 1:nrow(bh_entries)) {
-  current_val = getCV_BH(as.numeric(rownames(bh_entries)[j]), nrow(bh_entries), q_value)
+  current_val = getCV_BH(as.numeric(rownames(bh_entries)[j]),
+                         nrow(bh_entries), q_value)
   cv_scores = c(cv_scores, current_val)
 }
 
-#cv_col = apply(bh_entries, 1, function(x) getCV_BH(as.numeric(rownames(bh_entries)), nrow(bh_entries), q_value))
+#cv_col = apply(bh_entries, 1, function(x)
+#getCV_BH(as.numeric(rownames(bh_entries)), nrow(bh_entries), q_value))
 bh_entries = data.frame(bh_entries, cv_scores)
 
 ## 4)
 ## Find all rows where p_values < cv_scores
 bh_entries = bh_entries[bh_entries$p_values < bh_entries$cv_scores,]
 
+```
+
+**Answer:** As there is no $\alpha$ level given, we choose it as $\alpha = 0.05$. The implemented method can be found in the source code appendix.
+
+After applying the BH-method, we have `39` features left, which are the following (inculdung their p_values and cv_scores).
+
+```{r}
+
 kable(bh_entries)
 
 ```
 
-
+The purpose of the BH-method is to decrease the FDR (False Discovery Rate). The last entry in the list has the highest p_value, which is smaller then the cirtical value. This means that all values after that (here truncated) are considered significant. This means, for those values $H_0$ is rejected.
 
 # Appendix
 

@@ -15,6 +15,7 @@ output:
 
 ```{r setup, include=FALSE}
 
+#knitr::opts_chunk$set(echo = FALSE, cache = TRUE)
 knitr::opts_chunk$set(echo = TRUE)
 library(geosphere)
 library(ggplot2)
@@ -52,7 +53,7 @@ This exercise uses three kernels which are combined to predict the temperatures 
 
 ### Helper Function
 
-The helper function `min_distance(a, b, ringSize)` calculates the minimal distance between two elements on a discrete Quotient Ring. Let's say we have the two times `03:00` and `23:00`. The closes distance would be `4` hours, not `20:00` hours. We use the function for this example and for calculating the difference between two days as well. The `ringSize` thus ist `24` and `356` (we ignore all teh special cases we haev about years and times, like leap seconds). The function uses two applies to handle the calculcation of a given element `a` with `1:n` elements of `b`. The `pmin()` function is parallelized, so it's somewhat fast (we're still using R in the end).
+The helper function `min_distance(a, b, ringSize)` calculates the minimal distance between two elements on a discrete Quotient Ring. Let's say we have the two times `03:00` and `23:00`. The closes distance would be `4` hours, not `20:00` hours. We use the function for this example and for calculating the difference between two days as well. The `ringSize` thus is `24` and `356` (we ignore all the special cases we have about years and times, like leap seconds). The function uses two applies to handle the calculcation of a given element `a` with `1:n` elements of `b`. The `pmin()` function is parallelized, so it's somewhat fast (we're still using R in the end).
 
 ```{r, echo = TRUE}
 
@@ -77,8 +78,8 @@ min_distance = function(a, b, ringSize) {
 The following code shows the implementation of the three kernels. Each of them takes two elements, where `b` can be of size `1:n` like the `min_distance(a, b, ringSize)` function for faster computation. Each kernel takes as well a `smoothing` parameter and returns the results using the Gaussian Kernel.
 
 - The `kernel_gauss_distance` calculates the distance between two points using the *haversine method*.
-- The `kernel_gauss_day` calcualtes the difference between two days. It ignores the year (as we use the cycical behavior and do not count in any long term climate changes) and measures the distance using the `min_distance(a, b, ringSize)` function which results in values between `(0, 183)`.
-- The `kernel_gauss_hour` calculates the difference between two times on a day. It ignores the day (again, as we are intersted in teh cyclical behavior) and measures the distance using the `min_distance(a, b, ringSize)` function which results in values between `(0, 12)`.
+- The `kernel_gauss_day` calculates the difference between two days. It ignores the year (as we use the cyclical behaviour and do not count in any long term climate changes) and measures the distance using the `min_distance(a, b, ringSize)` function which results in values between `(0, 183)`.
+- The `kernel_gauss_hour` calculates the difference between two times on a day. It ignores the day (again, as we are interested in the cyclical behaviour) and measures the distance using the `min_distance(a, b, ringSize)` function which results in values between `(0, 12)`.
 
 ```{r, echo = TRUE}
 
@@ -306,7 +307,7 @@ For the weather prediction we use Linkoeping (`latitude = 58.410809` and `longit
 
 **Comment:** If we select an area or time where we basically have no datapoints, all kernel functions return only `0`, so their sum is zero as well. Dividing by zero is undefined and thus results in NA's. **End Comment**
 
-The following plot shows the weather prediction, we include the predictions for the sum and the product of the three kernels. We observe that the weather prediction seems to work better with the product of the three kernels as the sum struggles in adjusting to the daily differences in temperature. We can as well see that in general the prediction is reasonable (it's colder at nights) and the temperatured for Mai seems reasonable (maybe not that much for the sum, but that's okay as it's not a good model).
+The following plot shows the weather prediction, we include the predictions for the sum and the product of the three kernels. We observe that the weather prediction seems to work better with the product of the three kernels as the sum struggles in adjusting to the daily differences in temperature. We can as well see that in general the prediction is reasonable (it's colder at nights) and the temperature seems reasonable as well (maybe not that much for the sum, but that's okay as it's not a good model). The only "akward" thing to obersve is the "bumby" temperate drop at the end of the day.
 
 ```{r, echo = FALSE}
 
@@ -364,11 +365,14 @@ test_spam = spam[id3,]
 
 # Our three models depending on
 model_svm_05 =
-  ksvm(type ~ ., train_spam, kernel = "rbfdot", kpar = list(sigma = 0.05), C = 0.5)
+  ksvm(type ~ ., train_spam, kernel = "rbfdot",
+       kpar = list(sigma = 0.05), C = 0.5)
 model_svm_1 =
-  ksvm(type ~ ., train_spam, kernel = "rbfdot", kpar = list(sigma = 0.05), C = 1)
+  ksvm(type ~ ., train_spam, kernel = "rbfdot",
+       kpar = list(sigma = 0.05), C = 1)
 model_svm_5 =
-  ksvm(type ~ ., train_spam, kernel = "rbfdot", kpar = list(sigma = 0.05), C = 5)
+  ksvm(type ~ ., train_spam, kernel = "rbfdot",
+       kpar = list(sigma = 0.05), C = 5)
 
 model_svm_05_prediction = predict(model_svm_05, newdata = val_spam)
 model_svm_1_prediction = predict(model_svm_1, newdata = val_spam)
@@ -406,7 +410,7 @@ print(error_svm_5)
 
 ```
 
-Therefore we select the model where ```C = 5```. It doesn't really make sense to select a model just based on the training data, that why the two steps were combined and the generalization error was considered using the validation data set. We use the test data set to actually get a good esimation of our model (holdout).
+Therefore we select the model where ```C = 5```. It doesn't really make sense to select a model just based on the training data, thats why the two steps were combined and the generalization error was considered using the test data set. We use the test data set to actually get a good esimation of our model (holdout).
 
 ## Produce the SVM
 
