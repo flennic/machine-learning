@@ -3,20 +3,19 @@ title: "Lab 3 Block 1: Kernel Meethods and Neural Networks"
 author: "Maximilian Pfundstein"
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
-    toc: true
-    toc_depth: 3
-    number_sections: true
   html_document:
     df_print: paged
     toc_float: true
+    number_sections: true
+  pdf_document:
+    toc: true
+    toc_depth: 3
     number_sections: true
 ---
 
 ```{r setup, include=FALSE}
 
-#knitr::opts_chunk$set(echo = FALSE, cache = TRUE)
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, cache = TRUE)
 library(geosphere)
 library(ggplot2)
 library(kernlab)
@@ -161,7 +160,7 @@ h_distance = 150000 #150000
 h_date = 30 #30
 h_time = 3 #3
 
-distances =kernel_gauss_distance(compare_value_distance,
+distances = kernel_gauss_distance(compare_value_distance,
                                  plot_values_distance, h_distance)
 days = kernel_gauss_day(compare_value_day, plot_values_day, h_date)
 hours = kernel_gauss_hour(compare_value_hour, plot_values_hour, h_time)
@@ -214,23 +213,7 @@ ggplot(plot_data_frame_hour) +
 
 ```{r, echo = FALSE}
 
-kernel_sum = function(A, B, h_distance, h_date, h_time) {
-  return(
-    kernel_gauss_distance(A, B, h_distance) + 
-    kernel_gauss_day(A, B, h_date) + 
-    kernel_gauss_hour(A, B, h_time)
-  )
-}
-
-kernel_product = function(A, B, h_distance, h_date, h_time) {
-  return(
-    kernel_gauss_distance(A, B, h_distance) * 
-    kernel_gauss_day(A, B, h_date) * 
-    kernel_gauss_hour(A, B, h_time)
-  )
-}
-
-predict_weather = function(u_latitude, u_longitude, u_date, u_type) {
+predict_weather = function(u_latitude, u_longitude, u_date) {
   
   # Data
   stations = read.csv("stations.csv", encoding = "UTF-8")
@@ -247,48 +230,46 @@ predict_weather = function(u_latitude, u_longitude, u_date, u_type) {
   # time is created with the loop at we predict for every time for the given day
   
   # Times to predict
-  times = c("04:00:00", "05:00:00", "06:00:00", "07:00:00",
-            "08:00:00", "09:00:00", "10:00:00", "11:00:00",
-            "12:00:00", "13:00:00", "14:00:00", "15:00:00",
-            "16:00:00", "17:00:00", "18:00:00", "19:00:00",
-            "20:00:00", "21:00:00", "22:00:00", "23:00:00",
-            "24:00:00")
+  #times = c("04:00:00", "05:00:00", "06:00:00", "07:00:00",
+  #          "08:00:00", "09:00:00", "10:00:00", "11:00:00",
+  #          "12:00:00", "13:00:00", "14:00:00", "15:00:00",
+  #          "16:00:00", "17:00:00", "18:00:00", "19:00:00",
+  #          "20:00:00", "21:00:00", "22:00:00", "23:00:00",
+  #          "24:00:00")
+  
+  times = c("04:00:00", "06:00:00", "08:00:00",  "10:00:00", 
+            "12:00:00",  "14:00:00","16:00:00",  "18:00:00",
+            "20:00:00",  "22:00:00", "24:00:00")
   
   # Temperatures to predict
-  temp = vector(length=length(times))
+  temp = data.frame()
+  
+  # Distance Kernel
+  kernel_distance = kernel_gauss_distance(list(
+      latitude = u_latitude, longitude = u_longitude), st, h_distance)
+  
+  # Day Kernel
+  kernel_day = kernel_gauss_day(list(date = u_date), st, h_date)
   
   # Prediction for each temp to predict
   for (i in 1:length(times)) {
     
-    # User data point for this iteration
-    user_data_point = list(
-      latitude = u_latitude,
-      longitude = u_longitude,
-      date = u_date,
-      time = times[i])
+    # Hour Kernel
+    kernel_hour = kernel_gauss_hour(list(time = times[i]), st, h_time)
     
-    if (u_type == "sum") {
-      # Parameters: A, B, h_distance, h_date, h_time
-      kernel = kernel_sum(user_data_point, st, h_distance, h_date, h_time)
-    }
-    else if (u_type == "prod") {
-      # Parameters: A, B, h_distance, h_date, h_time
-      kernel =
-        kernel_product(user_data_point, st, h_distance, h_date, h_time)
-    }
-    else {
-      stop("Du Nasenbaer!")
-    }
+    kernel_sum = kernel_distance + kernel_day + kernel_hour
+    kernel_prod = kernel_distance * kernel_day * kernel_hour
     
     # Now that we have the kernel value, we can calcuate the actual prediction
     # Formula taken from slide 8 from 
     # "Histogram, Moving Window, and Kernel Regression"
-    y = kernel %*% st$air_temperature/sum(kernel)
+    y_sum = kernel_sum %*% st$air_temperature/sum(kernel_sum)
+    y_prod = kernel_prod %*% st$air_temperature/sum(kernel_prod)
     
     # Let's save this predicted temperature
-    temp[i] = y
+    temp = rbind(temp, list(kernel_sum = y_sum, kernel_prod = y_prod))
   }
-  return(data.frame(times, temp))
+  return(cbind(times, temp))
 }
 
 set.seed(1234567890)
@@ -312,13 +293,11 @@ The following plot shows the weather prediction, we include the predictions for 
 ```{r, echo = FALSE}
 
 # Students' code here
-pred_temp_sum = predict_weather(latitude, longitude, date, "sum")
-pred_temp_prod = predict_weather(latitude, longitude, date, "prod")
+pred_temp_sum = predict_weather(latitude, longitude, date)
 
 plot_data_frame =
   data.frame(as.POSIXct(paste(date ,pred_temp_sum$times),
-                        format = "%Y-%m-%d %H:%M"),
-             pred_temp_sum$temp, pred_temp_prod$temp)
+                        format = "%Y-%m-%d %H:%M"), pred_temp_sum[2:3])
 colnames(plot_data_frame) = c("hour", "predWithSum", "predWithProd")
 
 ggplot(plot_data_frame) +
