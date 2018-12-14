@@ -3,13 +3,13 @@ title: "Lab 3 Block 1: Kernel Meethods and Neural Networks"
 author: "Maximilian Pfundstein"
 date: "`r Sys.Date()`"
 output:
-  html_document:
-    df_print: paged
-    toc_float: true
-    number_sections: true
   pdf_document:
     toc: true
     toc_depth: 3
+    number_sections: true
+  html_document:
+    df_print: paged
+    toc_float: true
     number_sections: true
 ---
 
@@ -182,9 +182,7 @@ plot_data_frame_hour = data.frame(plot_values_hour, hours)
 ggplot(plot_data_frame_distance) +
   geom_line(aes(x = plot_values_distance$latitude, y = distances,
                 colour = "Distance (smoothing = 150000)")) +
-  #geom_point(aes(x = plot_values_distance$latitude, y = distances),
-  #           colour = "orange") +
-  labs(title = "Gaussian Kernel Cruve With Selected Smoothing Factor",
+  labs(title = "Gaussian Kernel Distance",
        y = "Kernel Output",
        x = "Distance", color = "Legend") +
   scale_color_manual(values = c("orange"))
@@ -192,8 +190,7 @@ ggplot(plot_data_frame_distance) +
 ggplot(plot_data_frame_day) +
   geom_line(aes(x = plot_values_day,
                 y = days, colour = "Day (smoothing = 30)")) +
-  #geom_point(aes(x = plot_values_day, y = days), colour = "blue") #+
-  labs(title = "Gaussian Kernel Cruve With Selected Smoothing Factor",
+  labs(title = "Gaussian Kernel Over One Year",
        y = "Kernel Output",
        x = "Day", color = "Legend") +
   scale_color_manual(values = c("blue"))
@@ -201,9 +198,7 @@ ggplot(plot_data_frame_day) +
 ggplot(plot_data_frame_hour) +
   geom_line(aes(x = plot_values_hour, y = hours,
                 colour = "Hour (smoothing = 3)")) +
-  #geom_point(aes(x = plot_values_hour, y = hours), colour = "green")
-  #
-  labs(title = "Gaussian Kernel Cruves With Selected Smoothing Factor",
+  labs(title = "Gaussian Kernel Over One Day",
        y = "Kernel Output",
        x = "Hour", color = "Legend") +
   scale_color_manual(values = c("violet"))
