@@ -3,13 +3,13 @@ title: "Lab 3 Block 1: Kernel Meethods and Neural Networks"
 author: "Maximilian Pfundstein"
 date: "`r Sys.Date()`"
 output:
-  html_document:
-    df_print: paged
-    toc_float: true
-    number_sections: true
   pdf_document:
     toc: true
     toc_depth: 3
+    number_sections: true
+  html_document:
+    df_print: paged
+    toc_float: true
     number_sections: true
 ---
 
@@ -66,7 +66,7 @@ min_distance = function(a, b, ringSize) {
   
   boundOne = sapply(b, FUN = function(x) abs(a - x))
   boundTwo = sapply(b, FUN = function(x) abs(a + ringSize - x))
-  
+    
   return(pmin(boundOne, boundTwo))
 }
 
@@ -156,9 +156,9 @@ compare_value_day = list(date = "2018-07-01")
 compare_value_hour = list(time = "12:30:00")
 
 # Smoothing factors
-h_distance = 150000  # 5000 #150000
-h_date = 30 # 7#30
-h_time = 3 # 0.5 #3
+h_distance = 150000 #150000
+h_date = 30 #30
+h_time = 3 #3
 
 distances =kernel_gauss_distance(compare_value_distance,
                                  plot_values_distance, h_distance)
@@ -208,7 +208,6 @@ ggplot(plot_data_frame_hour) +
        x = "Hour", color = "Legend") +
   scale_color_manual(values = c("violet"))
 
-
 ```
 
 
@@ -230,7 +229,7 @@ kernel_product = function(A, B, h_distance, h_date, h_time) {
   )
 }
 
-predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
+predict_weather = function(u_latitude, u_longitude, u_date, u_type) {
   
   # Data
   stations = read.csv("stations.csv", encoding = "UTF-8")
@@ -263,7 +262,7 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
     # User data point for this iteration
     user_data_point = list(
       latitude = u_latitude,
-      longitude = u_longtitude,
+      longitude = u_longitude,
       date = u_date,
       time = times[i])
     
@@ -294,10 +293,10 @@ predict_weather = function(u_latitude, u_longtitude, u_date, u_type) {
 set.seed(1234567890)
 
 # Linkoeping
-latitude = 58.410809
-longitude = 15.621373
-#date = "2000-05-08"
-date = "2018-12-14"
+latitude = 58.4166
+longitude = 15.6333
+date = "2000-05-08"
+#date = "2018-12-14"
 
 ```
 

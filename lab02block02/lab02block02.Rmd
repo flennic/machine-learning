@@ -31,7 +31,7 @@ set.seed(1234567890)
 
 # 1) Using GAM and GLM to examine the mortality rates
 
-The Excel document influenza.xlsx contains weekly data on the mortality and the number of laboratory-confirmed cases of influenza in Sweden. In addition, there is information about population-weighted temperature anomalies (temperature deficits).
+The Excel document `influenza.xlsx` contains weekly data on the mortality and the number of laboratory-confirmed cases of influenza in Sweden. In addition, there is information about population-weighted temperature anomalies (temperature deficits).
 
 ```{r, echo=FALSE}
 
@@ -106,7 +106,9 @@ print(gam_model)
 
 ```
 
-**TODO:** Report the underlying probabilistic model.
+The probabilistic model looks as follows: 
+
+$$ Model = \mathcal{N}(\beta_{year} * X_{Year} +S_{week} * X_{week} + \alpha,  \sigma^2) $$
 
 ## 1.3)
 
@@ -136,24 +138,85 @@ ggplot(mortality_values) +
 
 **Comment:** We can see that the fitted data is actually not performing that bad. It recognized the cyclical trend correctly. The drawback of the smoothing is that the extrem values are not correctly predicted, as those are smoothed out.
 
-**TODO:** Comment on which terms seem to be significant and on the spline curve.
+```{r, echo = FALSE}
+
+ggplot() +
+  geom_line(aes(x=influanza$Week,y=influanza$Mortality,
+                         colour=as.factor(influanza$Year))) +
+  labs(x='Week', y='Mortality', colour='Year',
+       title='Mortality by Week and by Year')
+
+```
+
+We observe that the spline curve is following the trend we can observe over the years, with a peak in the beginning/end of the year.
 
 ## 1.4)
 
 **Task:** Examine how the penalty factor of the spline function in the GAM model from step 2 influences the estimated deviance of the model. Make plots of the predicted and observed mortality against time for cases of very high and very low penalty factors. What is the relation of the penalty factor to the degrees of freedom? Do your results confirm this relationship?
 
-```{r, echo = TRUE}
+```{r, echo = FALSE}
 
-penalties = seq(from = 0 , to = 1, by = 0.1)
+penalties = seq(from = 0 , to = 20, by = 0.1)
 index = 1
-fitted_gam_with_penalties = matrix(nrow = length(penalties), ncol = nrow(influanza))
 
-for (index in 1:length(penalties)) {
-  gam_model = gam(formula = Mortality ~ Year + s(Week, sp = penalties[index]), family = gaussian(), data = influanza, method="GCV.Cp") 
+for (penalty in penalties) {
+  gam_model = gam(formula = Mortality ~ Year + s(Week, sp = penalty),
+                  family = gaussian(), data = influanza, method="GCV.Cp") 
   
-  fitted_gam_with_penalties[index,] = gam_model$fitted.values
-  index = index + 1
+  fitted_gam_with_penalties = rbind(fitted_gam_with_penalties,
+        data.frame(list(penalty = penalty,
+                        deviance = gam_model$deviance,
+                        df = sum(influence(gam_model)))))
 }
+
+## Deviance VS Penalty
+ggplot(fitted_gam_with_penalties) +
+  geom_line(aes(x = fitted_gam_with_penalties$penalty,
+                y = fitted_gam_with_penalties$deviance,
+                colour = "Deviance/Penalty")) +
+  labs(title = "Deviance VS Penalty", y = "Deviance",
+       x = "Penalty", color = "Legend") +
+  scale_color_manual(values = c("blue", "orange"))
+
+## Penalty Factors vs Degrees of Freedom
+ggplot(fitted_gam_with_penalties) +
+  geom_line(aes(x = fitted_gam_with_penalties$deviance,
+                y = fitted_gam_with_penalties$df,
+                colour = "Degrees of Freedom/Deviance")) +
+  labs(title = "Deviance VS Degree of Freedom", y = "Degrees of Freedom",
+       x = "Deviance/DF", color = "Legend") +
+  scale_color_manual(values = c("blue", "orange"))
+
+
+## Create Models for High and Low penalties
+gam_model_low_pen = gam(formula = Mortality ~ Year + s(Week, sp = 0.1),
+                  family = gaussian(), data = influanza, method="GCV.Cp") 
+gam_model_high_pen = gam(formula = Mortality ~ Year + s(Week, sp = 20),
+                  family = gaussian(), data = influanza, method="GCV.Cp") 
+
+high_low_df = data.frame()
+high_low_df = rbind(high_low_df,
+                    list(mortality = influanza$Mortality,
+                          mortality_low = fitted(gam_model_low_pen),
+                          mortality_high = fitted(gam_model_high_pen),
+                          date = influanza$Time))
+
+ggplot(high_low_df) +
+  geom_line(aes(x = date, y = mortality, colour = "Mortality")) +
+  geom_line(aes(x = date, y = mortality_low, colour = "Mortality (Low)")) +
+  geom_line(aes(x = date, y = mortality_high, colour = "Mortality (High)")) +
+  labs(title = "Mortalities vs Time", y = "Mortality",
+       x = "Time", color = "Legend") +
+  scale_color_manual(values = c("blue", "orange", "violet"))
+
+ggplot(mortality_values) +
+  geom_line(aes(x = time, y = observed,
+                colour = "Observed Mortality")) +
+  geom_line(aes(x = time, y = predicted,
+                colour = "Predicted Mortality")) +
+  labs(title = "Observed vs Predicted Mortality", y = "Mortality",
+       x = "Time", color = "Legend") +
+  scale_color_manual(values = c("blue", "orange"))
 
 ```
 
