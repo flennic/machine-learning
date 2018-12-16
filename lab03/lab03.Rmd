@@ -67,9 +67,10 @@ The helper function `min_distance(a, b, ringSize)` calculates the minimal distan
 min_distance = function(a, b, ringSize) {
   
   boundOne = parSapply(cl, b, FUN = function(x) abs(a - x))
-  boundTwo = parSapply(cl, b, FUN = function(x) abs(a + ringSize - x))
+  boundTwo = parSapply(cl, b, FUN = function(x) abs(a - ringSize - x))
+  boundThree = parSapply(cl, b, FUN = function(x) abs(a + ringSize - x))
     
-  return(pmin(boundOne, boundTwo))
+  return(pmin(boundOne, boundTwo, boundThree))
 }
 
 ```
@@ -158,7 +159,7 @@ compare_value_day = list(date = "2018-07-01")
 compare_value_hour = list(time = "12:30:00")
 
 # Smoothing factors
-h_distance = 150000 #150000
+h_distance = 300000 #150000
 h_date = 30 #30
 h_time = 3 #3
 
@@ -245,6 +246,8 @@ predict_weather = function(u_latitude, u_longitude, u_date) {
   kernel_distance = kernel_gauss_distance(list(
       latitude = u_latitude, longitude = u_longitude), st, h_distance)
   
+  print(head(kernel_distance))
+  
   # Day Kernel
   kernel_day = kernel_gauss_day(list(date = u_date), st, h_date)
   
@@ -272,10 +275,12 @@ predict_weather = function(u_latitude, u_longitude, u_date) {
 set.seed(1234567890)
 
 # Linkoeping
+#latitude = 58.4274
+#longitude = 14.826
 latitude = 58.4166
 longitude = 15.6333
 date = "2000-05-08"
-#date = "2018-12-14"
+#date = "2013-11-04"
 
 ```
 

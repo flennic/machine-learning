@@ -25,7 +25,7 @@ library(mgcv)
 library(pamr)
 library(kernlab)
 library(glmnet)
-set.seed(1234567890)
+set.seed(12345)
 
 ```
 
@@ -100,7 +100,7 @@ If both plots are superimposed we can observe that it seems like that mortality 
 # - ...and spline function of Week
 # Don't forget to select the model bei generalized cross-validation
 
-gam_model = gam(formula = Mortality ~ Year + s(Week), family = gaussian(),
+gam_model = gam(formula = Mortality ~ Year + s(Week, k=length(unique(influanza$Week))), family = gaussian(),
                 data = influanza, method="GCV.Cp") 
 
 print(gam_model)
@@ -109,7 +109,7 @@ print(gam_model)
 
 The probabilistic model looks as follows: 
 
-$$ Model = \mathcal{N}(\beta_{year} * X_{Year} +S_{week} * X_{week} + \alpha,  \sigma^2) $$
+$$ Model \sim \mathcal{N}(\beta_{year} * X_{Year} +S_{week} * X_{week} + \alpha,  \sigma^2) $$
 
 ## 1.3)
 
@@ -196,9 +196,11 @@ ggplot(fitted_gam_with_penalties) +
   scale_color_manual(values = c("blue", "orange"))
 
 ## Create Models for High and Low penalties
-gam_model_low_pen = gam(formula = Mortality ~ Year + s(Week, sp = 0.1),
+gam_model_low_pen = gam(formula = Mortality ~ Year + s(Week, k=length(unique(influanza$Week)), sp = 0.1),
                   family = gaussian(), data = influanza, method="GCV.Cp") 
-gam_model_high_pen = gam(formula = Mortality ~ Year + s(Week, sp = 20),
+gam_model_high_pen =
+  gam(formula = Mortality ~ Year + s(Week, k=length(unique(influanza$Week)),
+                                     sp = 20),
                   family = gaussian(), data = influanza, method="GCV.Cp") 
 
 high_low_df = data.frame()
@@ -210,8 +212,8 @@ high_low_df = rbind(high_low_df,
 
 ggplot(high_low_df) +
   geom_line(aes(x = date, y = mortality, colour = "Mortality")) +
-  geom_line(aes(x = date, y = mortality_low, colour = "Mortality (Low)")) +
-  geom_line(aes(x = date, y = mortality_high, colour = "Mortality (High)")) +
+  geom_line(aes(x = date, y = mortality_low, colour = "Mortality (Low: 0.1)")) +
+  geom_line(aes(x = date, y = mortality_high, colour = "Mortality (High: 20)")) +
   labs(title = "Mortalities vs Time", y = "Mortality",
        x = "Time", color = "Legend") +
   scale_color_manual(values = c("blue", "orange", "violet"))
@@ -271,8 +273,8 @@ ggplot(print_data) +
 
 gam_model_additive = gam(formula =
                          Mortality ~ s(Year, k=length(unique(influanza$Year))) +
-                         s(Week, k=length(unique(influanza))) +
-                         s(Influenza, k=length(unique(influanza$Year))),
+                         s(Week, k=length(unique(influanza$Week))) +
+                         s(Influenza, k=length(unique(influanza$Influenza))),
                          family = gaussian(), data = influanza, method="GCV.Cp")
 
 summary(gam_model_additive)
@@ -311,6 +313,8 @@ emails = read.csv2("data.csv", fileEncoding = "ISO-8859-1", sep = ";")
 emails$Conference = as.factor(emails$Conference)
 kable(head(emails[,1:10]))
 
+set.seed(12345)
+
 n = dim(emails)[1]
 id = sample(1:n, floor(n*0.70))
 train_emails = emails[id,]
@@ -325,6 +329,8 @@ val_emails = emails[-id,]
 - Provide a centroid plot and interpret it. How many features were selected by the method?
 - List the names of the 10 most contributing features and comment whether it is reasonable that they have strong effect on the discrimination between the conference mails and other mails?
 - Report the test error.
+
+The model with the lowest error has a treshold of:
 
 ```{r, echo = FALSE, results='hide'}
 
@@ -342,13 +348,15 @@ mydata_train = list(x=x_train ,y=as.factor(y_train), geneid =
 nsc_model = pamr.train(mydata_train, threshold=seq(0, 4, 0.1))
 nsc_model_cv = pamr.cv(nsc_model, mydata_train)
 
-genes = pamr.listgenes(nsc_model, mydata_train, threshold = 2.5)
+nsc_model_cv$threshold[which.min(nsc_model_cv$error)]
 
 ```
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, fig.height=10, fig.width=10}
 
-pamr.plotcen(nsc_model, mydata_train, threshold = 2.5)
+genes = pamr.listgenes(nsc_model, mydata_train, threshold = 1.3)
+
+pamr.plotcen(nsc_model, mydata_train, threshold = 1.3)
 
 print(nsc_model_cv)
 pamr.plotcv(nsc_model_cv)
@@ -422,7 +430,7 @@ Compare the results of these models with the results of the nearest shrunken cen
 ```{r, echo = FALSE}
 
 ################################################################################
-# 2.3) 
+# 2.2) 
 ################################################################################
 
 # Elastic Net
