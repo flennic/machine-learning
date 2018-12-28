@@ -1,0 +1,218 @@
+---
+title: "Machine Learning Summary"
+author: "Maximilian Pfundstein"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+  html_document:
+    df_print: paged
+    toc_float: true
+    number_sections: true
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, cache = TRUE, include = TRUE)
+```
+
+# Terms
+
+## Bagging
+
+## Bias-Variance-Trade-Off
+
+## Curse of Dimensionality
+
+## Degrees of Freedom
+
+## Generative vs Discriminative
+
+## Kernel Trick
+
+## Mean Squared Error (MSE)
+
+## Misclassification Rate
+
+## No Free Lunch Theorem
+
+## Ordinary Least Squares Regression (OLS)
+
+## Parametric and Non-Parametric Models
+
+## Types of Learning
+
+### Active Learning
+
+### Reinforcement Learning
+
+### Semi-supervised
+
+### Supervised Learning
+
+### Unsupervised Learning
+
+## Under- and Overfitting
+
+# Useful Code Snippets
+
+## Confusion Matrix and Misclassification Rate
+
+## Custom Error Function
+Gam and Tree
+
+## Feature Plot
+
+## Histogram
+
+## Importing Data
+Also include how to handle encoding issues.
+
+### .csv
+
+### .xls
+
+### .xlsx
+
+## RMarkdown Template
+
+# Models
+
+## Bayesian Classification
+
+## Boosting
+
+### AdaBoost
+
+### Forward Stagewise Additive Modeling
+
+### Gradient Boosting
+
+## Elastic Net
+
+## Generalized Additive Model (GAM)
+
+Family parameter
+mgcv
+
+## Generalized Linear Model (GLM)
+
+- Response Poisson distributed
+- Canonical Link (log) is used for regression
+- probabilistic expression for the fitted model
+
+## K-Nearest Neighbour (KNN)
+
+## Lasso
+
+## Least Absolute Deviation Regression
+
+## Linear Regression
+
+## Logistic Regression
+
+- Equation of decision boundary
+- Plot classified data and decision boundary
+- GLM
+- Custom Classification
+
+## Naive Bayes
+
+## Nearest Shrunken Centroid Classification (NSCC)
+
+## Neural Networks (NN)
+
+Limitations and Types
+
+### Backpropagation Implementation
+
+### Implementation
+Naive Bayes that uses nonparametric density estimation method
+Hint: density() function does not have predict() function but it evaluates predictions on a given grid. To make prediction for a vector of new values, you may call density() several times and specify one prediction point at a time, i.e. interval [a,b]=[x(i),x(i)].
+
+### Library
+
+### Regularization
+
+## Partial Least Squares Regression (PLS)
+
+## Quadratic Discriminant Analysis
+
+## Ridge Regression
+
+## StepAIC (AIC)
+
+## Support Vector Machines (SVM)
+
+## Trees
+
+Decision, Regression, Pruning, Deviance, Gini,
+Blackboost, Random Forest, CART
+
+# Feature Reduction
+
+## Independent Component Analysis (ICA)
+
+## Linear Discriminant Analysis (LDA)
+lda() in package mass
+
+### Implementation
+
+### Library
+
+## Principal Component Analysis (PCA)
+Trace Plots
+
+### Kernel PCA
+kpca in kernlab
+
+## Regularized Discriminant Analysis
+
+# Miscellaneous
+
+## Benjamin-Hochberg Algorithm
+
+## Bootstrapping
+
+### Confidence Band and Prediction Bands
+
+### Parametric and Non-Parametric
+
+## Cross-Validation
+
+### Cross Validation Plot
+
+### K-Fold
+
+### Nested Cross Validation
+
+### Two-Fold
+
+## EM-Algorithm
+
+## Holdout-Principle
+
+## K-Means Algorithm
+
+## Kernel Density Estimation
+
+Epanechnikov kernel
+Exam 2015 2.3
+
+## Kernel Methods
+
+### Histogram Classification
+
+### Moving Windows Classification
+
+## Loss-Matrix
+
+## Probability Model and Log-Likelihood
+From the engineers
+
+## ROC-Curve
+
+TPR, FPR
+
+## Splines
