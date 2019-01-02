@@ -3,13 +3,13 @@ title: "Machine Learning Summary"
 author: "Maximilian Pfundstein"
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
-    toc: true
-    toc_depth: 3
-    number_sections: true
   html_document:
     df_print: paged
     toc_float: true
+    number_sections: true
+  pdf_document:
+    toc: true
+    toc_depth: 3
     number_sections: true
 ---
 
@@ -420,6 +420,119 @@ print(paste(sep = "", "Best lambda score: ", lasso_vc$lambda.min))
 model = lm(formula = c_formula, data = tecator_data)
 ```
 
+## Log Likelihood
+
+Assume the probability model $p(x|\theta) = \theta e^{-\theta x}$ for x=Length in which observations are independent and identically distributed. What is the distribution type of x? Write a function that computes the log-likelihood $log p(x|\theta)$ for a given $\theta$ and a given data vector x. Plot the curve showing the dependence of log-likelihood on $\theta$ where the entire data is used for fitting. What is the maximum likelihood value of $\theta$ according to the plot?
+
+
+```{r}
+# Function that computes log-likelihood for given theta and vector x
+compute_llh = function(theta, x) {
+  p = dexp(x, theta) # vector with densities p(xi | theta) for each i
+  likelihood = prod(p) # product of all densities in p
+  loglikelihood = log(likelihood) # take natural logarithm
+}
+
+# Plot that shows the dependency of the log-likelihood on theta
+llhs = sapply(seq(0, 10, 0.005), compute_llh, x = df$Length)
+plotdata1 = data.frame(loglikelihood = llhs, theta = seq(0, 10, 0.005),
+data = "All", type = "Exponential")
+
+ggplot(plotdata1) +
+geom_point(aes(x = theta, y = loglikelihood), size = 0.5, color = "#00BFC4") +
+labs(title = "Loglikelihood by Theta") + theme_minimal() +
+theme(plot.title = element_text(hjust = 0.5)) +
+scale_x_continuous(limits = c(0, 10), breaks = seq(0, 10, 0.5))
+```
+
+Repeat step 2 but use only 6 first observations from the data, and put the two log-likelihood curves (from step 2 and 3) in the same plot. What can you say about reliability of the maximum likelihood solution in each case?
+
+```{r}
+llhs = sapply(seq(0, 10, 0.005), compute_llh, x = df$Length[1:6])
+plotdata2 = data.frame(loglikelihood = llhs, theta = seq(0, 10, 0.005),
+  data = "6 observations", type = "Exponential")
+plotdata_aggr = rbind(plotdata2, plotdata1)
+
+p = ggplot(plotdata_aggr) +
+  geom_point(aes(x = theta, y = loglikelihood, color = data), size = 0.5) +
+  labs(title = "Loglikelihood by Theta", color = "Data") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(limits = c(0, 10), breaks = seq(0, 10, 0.5))
+
+p
+
+# tail(ggplot_build(p)$data[[1]]) # To see which color values are used
+# head(ggplot_build(p)$data[[1]]) # To see which color values are used
+# For comparison: Just the curve with 6 observations
+# p = ggplot(plotdata_aggr %>% filter(data == "6 observations")) +
+# geom_point(aes(x = theta, y = loglikelihood), color = "#F8766D", size = 0.5) +
+# labs(title = "Loglikelihood by Theta", color = "Data") +
+# theme_minimal() +
+# theme(plot.title = element_text(hjust = 0.5)) +
+# scale_x_continuous(limits = c(0, 10), breaks = seq(0, 10, 0.5))
+#
+# p
+```
+
+Assume now a Bayesioan model with $p(x|\theta)=\theta e^{-\theta x}$ and a prior $p(\theta) = \lambda e^{-\lambda \theta}$ with $\labda = 10$. Write a function computing $l(\theta) = log(p(x|\theta)p(\theta))$. What kind of measure is actually computed by this function? Plot the curse showing the dependence of $l(\theta)$ on $\theta$ computed using the entire data and overlay it with a plot from step 2. Find an optimal $\theta$ and compare your result with the previous findings.
+
+```{r}
+compute_l = function(theta, x) {
+# Likelihood: p(x|theta) -----------------------------------------------------
+p = dexp(x, theta) # vector with densities p(xi | theta) for each i
+likelihood = prod(p) # product of all densities in p
+
+# Prior: p(theta) where rate = lambda ----------------------------------------
+lambda = 10
+prior = dexp(theta, lambda)
+
+# Posterior ------------------------------------------------------------------
+posterior = likelihood * prior
+
+# Natural logarithm of posterior ---------------------------------------------
+logposterior = log(posterior)
+}
+
+# Plot that shows the dependency of the log-likelihood on theta
+ls = sapply(seq(0, 10, 0.005), compute_l, x = df$Length)
+plotdata3 = data.frame(loglikelihood = ls, theta = seq(0, 10, 0.005),
+  data = "All", type = "Bayesian")
+
+plotdata_aggr = rbind(plotdata3, plotdata1)
+p = ggplot(plotdata_aggr) +
+  geom_point(aes(x = theta, y = loglikelihood, color = type), size = 0.5) +
+  labs(title = "Loglikelihood (Exponential) vs. l (Bayesian) by Theta",
+  color = "Type") + theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(limits = c(0, 10), breaks = seq(0, 10, 0.5))
+
+p
+```
+
+Use $\theta$ value found in step 2 and generate 50 new obersvations from $p(x|\theta) = \theta e^{-\theta x}$ (use standard number generators). Create the histograms of the original and the new data and make conslusions.
+
+```{r}
+p1 = ggplot(df) +
+  geom_histogram(aes(x = Length), fill = "#00BFC4", alpha = 0.7) +
+  theme_minimal() + labs(title = "Original") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Histogram for simulated data with theta = 1.2
+simulated1 = data.frame(Length = rexp(50, rate = 1.2))
+
+p2 = ggplot(simulated1) +
+  geom_histogram(aes(x = Length), fill = "#F8766D", alpha = 0.7) +
+  theme_minimal() + labs(title = "Simulated (theta = 1.2)") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Bind Plots together
+plot_list = list(p1, p2)
+plot_list_arranged = arrangeGrob(grobs = plot_list, ncol = 2)
+grid.arrange(plot_list_arranged, top = "Histogram of Original vs. Simulated Lengths",
+padding = unit(0.5, "line"))
+```
+
 
 ## Logistic Regression
 
@@ -430,10 +543,104 @@ model = lm(formula = c_formula, data = tecator_data)
 
 ## Naive Bayes
 
+### Library
+
 ```{r}
 naiveBayesModel = naiveBayes(good_bad ~ ., data = train)
 ```
 
+### Implementation
+
+Hint: density() function does not have predict() function but it evaluates predictions on a given grid. To make prediction for a vector of new values, you may call density() several times and specify one prediction point at a time, i.e. interval [a,b]=[x(i),x(i)].
+
+```{r}
+# Transforms a confusion matrix
+# to a data frame. It assumes
+# a 2 by 2 binary confusion matrix.
+prettyfy_cm = function(cm_table) {
+  pretty_table = data.frame(list(titles=c("Blue", "Orange"),
+  Bad=c(cm_table[1, 1], cm_table[2, 1]),
+  Good=c(cm_table[1, 2], cm_table[2, 2])))
+  
+  colnames(pretty_table) = c("True / Predicted", "Blue", "Orange")
+  return(pretty_table)
+}
+
+# Removing variables that doesn't matter.
+data$index = NULL
+data$sex = NULL
+
+# Traing / test split.
+set.seed(12345)
+n = dim(data)[1]
+id = sample(1:n, floor(n * 0.5))
+train = data[id,]
+test = data[-id,]
+X_train = train[, c('FL', 'RW', 'CL', 'CW', 'BD')]
+X_test = test[, c('FL', 'RW', 'CL', 'CW', 'BD')]
+Xb_train = train[train$species == 'Blue',
+  c('FL', 'RW', 'CL', 'CW', 'BD')]
+Xo_train = train[train$species == 'Orange',
+  c('FL', 'RW', 'CL', 'CW', 'BD')]
+Xb_test = test[test$species == 'Blue',
+  c('FL', 'RW', 'CL', 'CW', 'BD')]
+Xo_test = test[test$species == 'Orange',
+  c('FL', 'RW', 'CL', 'CW', 'BD')]
+
+# Estimating the parameters.
+p_blue = sum(train$species == 'Blue') / nrow(train)
+p_orange = 1 - p_blue
+
+get_prob_vector = function(x, df) {
+  prob = 1
+  for (col_i in 1:ncol(df)) {
+    prob = prob * density(df[, col_i],
+    from=as.numeric(x[col_i]),
+    to=as.numeric(x[col_i]))$y[1]
+  }
+  return(prob)
+}
+
+# Function that calculates the likelihood
+# P(X | y=c).
+likelihood = function(data, train) {
+  probs = c()
+  for (row_i in 1:nrow(data)) {
+    probs = c(probs, get_prob_vector(data[row_i,], train))
+  }
+  return(probs)
+}
+
+# Getting the likelihood of
+# blue and orange for the train and test.
+l_blue_train = likelihood(X_train, Xb_train)
+l_orange_train = likelihood(X_train, Xo_train)
+l_blue_test = likelihood(X_test, Xb_train)
+l_orange_test = likelihood(X_test, Xo_train)
+
+# Calculating the class posterior.
+p_blue_x_train = l_blue_train * p_blue /
+  ((l_blue_train * p_blue) + (l_orange_train * p_orange))
+p_blue_x_test = l_blue_test * p_blue /
+  ((l_blue_test * p_blue) + (l_orange_test * p_orange))
+
+# Getting the classes.
+yhat_train = as.factor(ifelse(p_blue_x_train > 0.5, 'Blue', 'Organge'))
+yhat_test = as.factor(ifelse(p_blue_x_test > 0.5, 'Blue', 'Organge'))
+
+# Getting the confusion matrixes.
+cm_train = table(train$species, yhat_train)
+cm_test = table(test$species, yhat_test)
+
+# Printing the output.
+kable(prettyfy_cm(cm_train),
+caption='Confusion matrix for NBC on the train set')
+kable(prettyfy_cm(cm_test),
+caption='Confusion matrix for NBC on the test set')
+kable(get_metrics_cm(cm_train, cm_test),
+caption='Metrics for NBC on the train and test set')
+8
+```
 
 ## Nearest Shrunken Centroid Classification (NSCC)
 
@@ -494,11 +701,243 @@ Limitations and Types
 
 ### Backpropagation Implementation
 
-### Implementation
-Naive Bayes that uses nonparametric density estimation method
-Hint: density() function does not have predict() function but it evaluates predictions on a given grid. To make prediction for a vector of new values, you may call density() several times and specify one prediction point at a time, i.e. interval [a,b]=[x(i),x(i)].
+```{r}
+# Helper function for the derivative
+# of the activation function.
+tanh_prime = function(z) {
+  return(1 - (tanh(z) ^ 2))
+}
+
+# Helper function for the mse.
+MSE = function(y_true, y_hat) {
+  mse = mean((y_true - y_hat) ^ 2)
+  return(mse)
+}
+
+# Helper function for the
+# forward pass.
+forward = function(X, theta_1, b_1, theta_2, b_2) {
+  
+  # From input to the first
+  # hiden layer.
+  Z_1 = X %*% theta_1 + matrix(b_1, ncol=10, nrow=nrow(X), byrow=TRUE)
+  h_1 = tanh(Z_1)
+  
+  # From the hidden layer to
+  # the output layer.
+  
+  Z_2 = h_1 %*% theta_2 + matrix(b_2, nrow=nrow(X), ncol=1)
+  
+  # Creating a cache for the backward pass.
+  cache = list(Z_1=Z_1,  h_1=h_1, Z_2=Z_2)
+  return(cache)
+}
+
+set.seed(1432425)
+
+# Initialization of the network.
+
+Var = runif(50, 0, 10)
+trva = data.frame(Var, Sin=sin(Var))
+X_train = matrix(trva[1:25, 1], nrow=25, ncol=1)
+y_train = matrix(trva[1:25, 2], nrow=25, ncol=1)
+X_val = matrix(trva[26:50, 1], nrow=25, ncol=1)
+y_val = matrix(trva[26:50, 2], nrow=25, ncol=1)
+
+# Parameter initialization.
+lr = 0.23
+epochs = 25000
+
+# Weights initialization.
+# Xavier init: http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
+theta_1 = matrix(rnorm(10, mean=0, sqrt(2 / 11)), nrow=1, ncol=10)
+theta_2 = matrix(rnorm(10, mean=0, sqrt(2 / 11)), nrow=10, ncol=1)
+b_1 = matrix(rnorm(10, mean=0, sqrt(2 / 11)), nrow=1, ncol=10)
+b_2 = matrix(rnorm(1, mean=0, sqrt(2 / 1)), nrow=1, ncol=1)
+
+# Variables that are going to
+# store the losses.
+loss_train = c()
+loss_val = c()
+
+# Creating the test data.
+X_test = matrix(seq(0, 10, 0.1), nrow=101, ncol=1)
+y_test = sin(X_test)
+
+# Plotting the output of the neural network
+# before training.
+# Plotting the nn output.
+cache = forward(X_test, theta_1, b_1, theta_2, b_2)
+yhat_test = cache[['Z_2']]
+
+p = ggplot() +
+geom_line(aes(x=X_test, y=yhat_test, colour='Neural Network')) +
+geom_line(aes(x=X_test, y=y_test, colour='Real Values')) +
+scale_colour_manual(values=c("#1162bc", "#f83d69")) +
+labs(x='x', y='Sin(x)', title='Untrained Neural Network')
+
+print(p)
+# Training loop.
+for (epoch in 1:epochs) {
+  
+  # Selecting a random permutation
+  # of the training data.
+  rng_idx = sample(1:(nrow(X_train)))
+  
+  # Generating the new training sample.
+  X_train_i = X_train[rng_idx, , drop=FALSE]
+  y_train_i = y_train[rng_idx, , drop=FALSE]
+
+  ################
+  # Forward pass #
+  ################
+  forward_train = forward(X_train_i, theta_1, b_1, theta_2, b_2)
+  forward_val = forward(X_val, theta_1, b_1, theta_2, b_2)
+  
+  # Calculating the errors on the
+  # train and validation set.
+  mse_train = MSE(y_train_i, forward_train[['Z_2']])
+  mse_val = MSE(y_val, forward_val[['Z_2']])
+  
+  # Storing the losses.
+  loss_train = c(loss_train, mse_train)
+  loss_val = c(loss_val, mse_val)
+  
+  #################
+  # Backward pass #
+  #################
+  
+  # Calculating the derivatives.
+  delta = (- (1 / nrow(X_train_i)) * (y_train_i - forward_train[['Z_2']]))
+  d_theta_2 = t(forward_train[['h_1']]) %*% delta
+  d_theta_1 = t(delta) %*% (tanh_prime(forward_train[['Z_1']]) *
+    (X_train_i %*% t(theta_2)))
+  
+  d_b_2 = mean(delta)
+  d_b_1 = t(delta) %*%
+  (tanh_prime(forward_train[['Z_1']]) *
+  matrix(t(theta_2), ncol=10, nrow=nrow(X_train), byrow=TRUE))
+  
+  # Updating the parameters.
+  theta_2 = theta_2 - lr * d_theta_2
+  theta_1 = theta_1 - lr * d_theta_1
+  b_2 = b_2 - lr * d_b_2
+  b_1 = b_1 - lr * d_b_1
+}
+
+# Plotting the error.
+p = ggplot() +
+geom_line(aes(x=(1:epochs), y=loss_train, colour='Train')) +
+geom_line(aes(x=(1:epochs), y=loss_val, colour='Validation')) +
+labs(x='Epoch', y='MSE', colour='Data Set',
+title='Error of the neural network') +
+scale_colour_manual(values=c("#1162bc", "#f83d69"))
+print(p)
+
+# Plotting the nn output.
+cache = forward(X_test, theta_1, b_1, theta_2, b_2)
+yhat_test = cache[['Z_2']]
+
+# Plotting the train / val results.
+cache_train = forward(X_train, theta_1, b_1, theta_2, b_2)
+cache_val = forward(X_val, theta_1, b_1, theta_2, b_2)
+yhat_train = cache_train[['Z_2']]
+yhat_val = cache_val[['Z_2']]
+
+# Train.
+p = ggplot() +
+geom_point(aes(x=X_train, y=y_train, colour='Original')) +
+geom_point(aes(x=X_train, y=yhat_train, colour='Predicted')) +
+  scale_colour_manual(values=c("#1162bc", "#f83d69")) +
+labs(x='x', y='Sin(x)', colour='Type', shape='Type', title='Training data set')
+print(p)
+
+# Test.
+p = ggplot() +
+geom_point(aes(x=X_train, y=y_train, colour='Original')) +
+geom_point(aes(x=X_train, y=yhat_train, colour='Predicted')) +
+scale_colour_manual(values=c("#1162bc", "#f83d69")) +
+labs(x='x', y='Sin(x)', colour='Type', shape='Type', title='Validation data set')
+print(p)
+
+# Plotting the whole space [0, 10].
+p = ggplot() +
+geom_line(aes(x=X_test, y=yhat_test, colour='Neural Network')) +
+geom_line(aes(x=X_test, y=y_test, colour='Real Values')) +
+scale_colour_manual(values=c("#1162bc", "#f83d69")) +
+labs(x='x', y='Sin(x)', title='Trained Neural Network')
+print(p)
+
+```
+
 
 ### Library
+
+```{r}
+# Generating data
+set.seed(1234567890)
+Var = runif(50, 0, 10)
+trva = data.frame(Var, Sin = sin(Var))
+
+# Training and validation split
+tr = trva[1:25, ] # Training
+va = trva[26:50, ] # Validation
+nn_val_res_df = data.frame()
+
+# Random initialization of the weights in the interval [-1, 1]
+set.seed(1234567890)
+w_init = runif(31, -1, 1)
+
+for(i in 1:10) {
+  print(paste("Running NN: ", i))
+  set.seed(1234567890)
+  
+  # Training neural network
+  nn = neuralnet(Sin ~ Var, data = tr, hidden = 10,
+  startweights = w_init, threshold = i / 1000)
+  
+  # Predicting values for train and validation
+  va_res = neuralnet::compute(nn, va$Var)$net.result
+  tr_res = neuralnet::compute(nn, tr$Var)$net.result
+  
+  # Computing train and validation MSE
+  tr_mse = mean((tr_res - tr$Sin)^2)
+  va_mse = mean((va_res - va$Sin)^2)
+  
+  # Storing data in data frame
+  nn_val_res_df = rbind(nn_val_res_df,
+  data.frame(thres_num = i, thres_val = i / 1000,
+  val_mse = va_mse, trn_mse = tr_mse))
+}
+
+# Plot of MSE vs threshold for train and validation
+ggplot(nn_val_res_df) +
+  geom_point(aes(x = thres_val, y = val_mse, color = "Validation")) +
+  geom_line(aes(x = thres_val, y = val_mse, color = "Validation")) +
+  geom_point(aes(x = thres_val, y = trn_mse, color = "Train")) +
+  geom_line(aes(x = thres_val, y = trn_mse, color = "Train")) +
+  xlab("Threshold") + ylab("MSE") + labs(color = "Data") +
+  scale_x_continuous(breaks = (1:10)/1000) +
+  ggtitle("Neural Network - MSE vs Threshold for Train and Validation")
+
+# Final neural network
+# Best threshold = 0.001
+opt_nn = neuralnet(Sin ~ Var, data = tr, hidden = 10,
+  startweights = w_init, threshold = 0.001)
+  plot(x = opt_nn, rep = "best", information = F)
+
+# Plot of the predictions and the data
+nn_pred_df = tr
+nn_pred_df$Type = "Training Data"
+nn_pred_df = rbind(nn_pred_df, data.frame(Var = va$Var,
+  Sin = neuralnet::compute(opt_nn, va$Var)$net.result,
+  Type = "NN Prediction \nfor validation"))
+
+ggplot(nn_pred_df, aes(x = Var, y = Sin, color = Type)) + geom_point() +
+ggtitle("Comparison of neural network prediction with training data") +
+labs(color = "Legend")
+```
+
 
 ### Regularization
 
@@ -694,6 +1133,104 @@ ggplot(as.data.frame(W_dash)) +
 lda() in package mass
 
 ### Implementation
+
+```{r}
+#Helper function to calculate the
+# classification metrics given a
+# confusion matrix.
+# Rows (0, 1) must be from the classifier
+# Columns (0, 1) must be true values.
+analyze_cm = function(cm)
+{
+  cm_df = as.data.frame(cm)
+  recall = cm_df[4, "Freq"] / (cm_df[4, "Freq"] + cm_df[2, "Freq"])
+  precision = cm_df[4, "Freq"] / (cm_df[4, "Freq"] + cm_df[3, "Freq"])
+  accuracy = (cm_df[1, "Freq"] + cm_df[4, "Freq"]) / sum(cm_df[, "Freq"])
+  mcr = 1 - accuracy
+  fpr = cm_df[3, "Freq"] / (cm_df[1, "Freq"] + cm_df[3, "Freq"])
+  
+  return(list(Recall=recall,  Precision=precision,  Missclasification=mcr,
+  Accuracy=accuracy,  FPR=fpr))
+}
+
+# Helper function to get metrics from a confusion matrix.
+get_metrics_cm = function(cm_train, cm_test)
+{
+  metrics = data.frame(analyze_cm(cm_train))
+  metrics = rbind(metrics, analyze_cm(cm_test))
+  rownames(metrics) = c("Train", "Test")
+  return(t(metrics))
+}
+
+# Transforms a confusion matrix
+# to a data frame. It assumes
+# a 2 by 2 binary confusion matrix.
+prettyfy_cm = function(cm_table)
+{
+  pretty_table = data.frame(list(titles=c("Female", "Male"),
+  Bad=c(cm_table[1, 1], cm_table[2, 1]),
+  Good=c(cm_table[1, 2], cm_table[2, 2])))
+  colnames(pretty_table) = c("True / Predicted", "Female", "Male")
+  return(pretty_table)
+}
+
+# Reading the data.
+data = read.csv("australian-crabs.csv")
+
+# Getting the data.
+X = data[, c('RW', 'CL')]
+y = data[, 'sex']
+X_m = as.matrix(data[data$sex == 'Male', c('RW', 'CL')])
+X_f = as.matrix(data[data$sex == 'Female', c('RW', 'CL')])
+
+# Setting up the parameters for K=2.
+K = 2 # Number of classes.
+pi_m = sum(data$sex == 'Male') / nrow(data)
+pi_f = 1 - pi_m
+mu_m = colMeans(data[data$sex == 'Male', c('RW', 'CL')])
+mmu_m = matrix(mu_m, ncol=ncol(X_m), nrow=nrow(X_m),
+               byrow=TRUE) # Matrix form of mu_m.
+mu_f = colMeans(data[data$sex == 'Female', c('RW', 'CL')])
+mmu_f = matrix(mu_f, ncol=ncol(X_f), nrow=nrow(X_f),
+               byrow=TRUE) # Matrix form of mu_f.
+sigma_m = t(X_m - mmu_m) %*% (X_m - mmu_m)
+sigma_f = t(X_f - mmu_f) %*% (X_f - mmu_f)
+
+sigma = (sigma_m + sigma_f) / (nrow(data) - K)
+sigma_inv = solve(sigma)
+beta_m = sigma_inv %*% mu_m
+beta_f = sigma_inv %*% mu_f
+gamma_m = -0.5 * (t(mu_m) %*% sigma_inv %*% mu_m) + log(pi_m)
+gamma_f = -0.5 * (t(mu_f) %*% sigma_inv %*% mu_f) + log(pi_f)
+
+# Cretating the decision boundary.
+# The input should be in the space of RW
+# the output is on the space of CL.
+boundary = function(x) {
+  y = ((gamma_f - gamma_m) - x * (beta_m[1] - beta_f[1])) / (beta_m[2] - beta_f[2])
+  return(y)
+}
+
+x_boundary = seq(0, 25, 1)
+y_boundary = sapply(x_boundary, boundary)
+data_boundary = sapply(data$RW, boundary)
+classification = ifelse(data$CL > data_boundary, 'Male', 'Female')
+p = ggplot() +
+geom_point(aes(x=data$RW, y=data$CL, colour=classification)) +
+geom_line(aes(x=x_boundary, y=y_boundary), color='red') +
+labs(colour='Sex', y='CL', x='RW',
+title='Classification of australian crabs given CL and RW')
+print(p)
+
+# Creating the confusion matrix and
+# getting the metrics of the classification.
+cm = table(data$sex, classification)
+kable(prettyfy_cm(cm), caption='Confusion matrix for LDA')
+df_metrics = as.data.frame(get_metrics_cm(cm, cm)[, 'Train'])
+colnames(df_metrics) = 'Train'
+kable(df_metrics, caption='Metrics for LDA on the train set')
+```
+
 
 ### Library
 
