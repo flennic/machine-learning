@@ -3,13 +3,13 @@ title: "Machine Learning Summary"
 author: "Maximilian Pfundstein"
 date: "`r Sys.Date()`"
 output:
-  html_document:
-    df_print: paged
-    toc_float: true
-    number_sections: true
   pdf_document:
     toc: true
     toc_depth: 3
+    number_sections: true
+  html_document:
+    df_print: paged
+    toc_float: true
     number_sections: true
 ---
 
@@ -20,12 +20,26 @@ knitr::opts_chunk$set(echo = TRUE, cache = TRUE, include = TRUE, eval = FALSE)
 # Terms
 
 ## Bagging
+Bagging (stands for Bootstrap Aggregating) is a way to decrease the variance of your prediction by generating additional data for training from your original dataset using combinations with repetitions to produce multisets of the same cardinality/size as your original data. By increasing the size of your training set you can't improve the model predictive force, but just decrease the variance, narrowly tuning the prediction to expected outcome. 
 
-## Bias-Variance-Trade-Off
+## Bias-Variance Tradeoff
+There's a bias-variance tradeoff between setting the degrees of freedom. The more variables you have, more complex your model is. But it tends to overfit. So there must be a balance in selecting the variables.
+
+## Boosting
+Boosting is a two-step approach, where one first uses subsets of the original data to produce a series of averagely performing models and then "boosts" their performance by combining them together using a particular cost function (=majority vote). Unlike bagging, in the classical boosting the subset creation is not random and depends upon the performance of the previous models: every new subsets contains the elements that were (likely to be) misclassified by previous models.
 
 ## Curse of Dimensionality
+The curse of dimensionality refers to various phenomena that arise when analyzing and organizing data in high-dimensional spaces (often with hundreds or thousands of dimensions) that do not occur in low-dimensional settings such as the three-dimensional physical space of everyday experience. The expression was coined by Richard E. Bellman when considering problems in dynamic optimization.[1][2]
+
+Cursed phenomena occur in domains such as numerical analysis, sampling, combinatorics, machine learning, data mining and databases. The common theme of these problems is that when the dimensionality increases, the volume of the space increases so fast that the available data become sparse. This sparsity is problematic for any method that requires statistical significance. In order to obtain a statistically sound and reliable result, the amount of data needed to support the result often grows exponentially with the dimensionality. Also, organizing and searching data often relies on detecting areas where objects form groups with similar properties; in high dimensional data, however, all objects appear to be sparse and dissimilar in many ways, which prevents common data organization strategies from being efficient
 
 ## Degrees of Freedom
+**Definition:** : The degrees of freedom is the values in the final calculation of a statistic that are free to vary.
+**Example**: Example: If you know that mean of 4 numbers is 20, and two of those numbers are 40, 50. This means that if you can find out one of the remaining numbers (say x), you can tell with certainty that the last number (say y) will be $y = 20 - ((40 + 50 + x) / 3)$ i.e. you have one degree of freedom
+
+- In Machine learning theory, the independent variables on which the target depends on are called the degrees of freedom.
+- Need of degree of freedom: It is important to know which variables does the model depend on. This can then be used for feature selection.
+- Impact of degrees of freedom on Machine learning model: There's a bias-variance tradeoff between setting the degrees of freedom. The more variables you have, more complex your model is. But it tends to overfit. So there must be a balance in selecting the variables.
 
 ## Generative vs Discriminative
 
@@ -40,6 +54,9 @@ knitr::opts_chunk$set(echo = TRUE, cache = TRUE, include = TRUE, eval = FALSE)
 ## Ordinary Least Squares Regression (OLS)
 
 ## Parametric and Non-Parametric Models
+
+## Stacking
+Stacking is a similar to boosting: you also apply several models to your original data. The difference here is, however, that you don't have just an empirical formula for your weight function, rather you introduce a meta-level and use another model/approach to estimate the input together with outputs of every model to estimate the weights or, in other words, to determine what models perform well and what badly given these input data.
 
 ## Types of Learning
 
@@ -475,10 +492,13 @@ p
 # p
 ```
 
-Assume now a Bayesioan model with $p(x|\theta)=\theta e^{-\theta x}$ and a prior $p(\theta) = \lambda e^{-\lambda \theta}$ with $\labda = 10$. Write a function computing $l(\theta) = log(p(x|\theta)p(\theta))$. What kind of measure is actually computed by this function? Plot the curse showing the dependence of $l(\theta)$ on $\theta$ computed using the entire data and overlay it with a plot from step 2. Find an optimal $\theta$ and compare your result with the previous findings.
+Assume now a Bayesioan model with $p(x|\theta)=\theta e^{-\theta x}$ and a prior $p(\theta) = \lambda e^{-\lambda \theta}$ with $\lambda = 10$. Write a function computing $l(\theta) = log(p(x|\theta)p(\theta))$. What kind of measure is actually computed by this function? Plot the curse showing the dependence of $l(\theta)$ on $\theta$ computed using the entire data and overlay it with a plot from step 2. Find an optimal $\theta$ and compare your result with the previous findings.
 
 ```{r}
+df = readxl::read_xlsx("machines.xlsx")
+
 compute_l = function(theta, x) {
+  
 # Likelihood: p(x|theta) -----------------------------------------------------
 p = dexp(x, theta) # vector with densities p(xi | theta) for each i
 likelihood = prod(p) # product of all densities in p
@@ -639,7 +659,6 @@ kable(prettyfy_cm(cm_test),
 caption='Confusion matrix for NBC on the test set')
 kable(get_metrics_cm(cm_train, cm_test),
 caption='Metrics for NBC on the train and test set')
-8
 ```
 
 ## Nearest Shrunken Centroid Classification (NSCC)
@@ -718,14 +737,11 @@ MSE = function(y_true, y_hat) {
 # forward pass.
 forward = function(X, theta_1, b_1, theta_2, b_2) {
   
-  # From input to the first
-  # hiden layer.
+  # From input to the first hidden layer.
   Z_1 = X %*% theta_1 + matrix(b_1, ncol=10, nrow=nrow(X), byrow=TRUE)
   h_1 = tanh(Z_1)
   
-  # From the hidden layer to
-  # the output layer.
-  
+  # From the hidden layer to the output layer.
   Z_2 = h_1 %*% theta_2 + matrix(b_2, nrow=nrow(X), ncol=1)
   
   # Creating a cache for the backward pass.
@@ -975,7 +991,6 @@ summary(model.stepAIC)
 ## Support Vector Machines (SVM)
 
 ```{r}
-# Our three models depending on
 model_svm_05 =
   ksvm(type ~ ., train_spam, kernel = "rbfdot",
        kpar = list(sigma = 0.05), C = 0.5)
@@ -1233,6 +1248,167 @@ kable(df_metrics, caption='Metrics for LDA on the train set')
 
 
 ### Library
+
+Use `australien-crabs.csv` and make a scatterplot of carapace length (CL) versus rear width (RW) where observations are colored by Sex. Do you think that this data is easy to classify by LDA? Motivate your answer.
+
+```{r}
+# Maybe needed? options(scipen=999)
+
+df = read.csv("australian-crabs.csv")
+
+p_true = ggplot(df, aes(x = RW, y = CL, fill = sex, color = sex)) +
+  geom_point(shape = 23, size = 2, alpha = 0.8) +
+  scale_x_continuous(limits = c(5, 21), breaks = seq(5, 20, 5)) +
+  scale_y_continuous(limits = c(14, 50), breaks = seq(20, 50, 10)) +
+  labs(color = "Sex", fill = "Sex", title = "Scatterplot of CL by RW") +
+  theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
+
+p_true
+```
+
+
+Make LDA analysis with target SEX and features CL and RW and proportional prior using `lda()` function in package `MASS`. Make a scatter plot of CL versus RW colored by the predicted Sex and compare it with the plot in step 1. Compute the misclassification error and comment on the quality of the fit.
+
+
+```{r}
+# Conduct lda ------------------------------------------------------------------
+
+# Note: by default, prior is set to the proportions of Male:Female: c(0.5, 0.5)
+# To check if the results are the same, add prior = c(0.5, 0.5) as param to lda()
+
+lda.model.train = MASS::lda(sex ~ CL + RW, data = df) # LDA
+lda.pred.train = predict(lda.model.train, df) # predict (probs, class etc.)
+lda.class.train = lda.pred.train$class # extract class
+df$sex_lda = lda.class.train # add class to df
+
+# Compare plots ----------------------------------------------------------------
+p_true = p_true + labs(title = "Color = true sex")
+
+p_lda_prop = ggplot(df, aes(x = RW, y = CL, fill = sex_lda, color = sex_lda)) +
+  geom_point(shape = 23, size = 2, alpha = 0.8) +
+  scale_x_continuous(limits = c(5, 21), breaks = seq(5, 20, 5)) +
+  scale_y_continuous(limits = c(14, 50), breaks = seq(20, 50, 10)) +
+  labs(color = "Sex", fill = "Sex", title = "Color = classified sex") +
+  theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
+
+p = ggpubr::ggarrange(plotlist = list(p_true, p_lda_prop), ncol = 2,
+  common.legend = TRUE, legend = "bottom")
+
+ggpubr::annotate_figure(p, top = "Plot of CL by RW [priors: 0.5 Male, 0.5 Female]")
+## gridExtra does not allow for common legend unfortunately
+# plot_list_arranged = gridExtra::arrangeGrob(grobs = list(p1, p2), ncol = 2)
+
+# gridExtra::grid.arrange(plot_list_arranged, top = "Scatterplot of CL by RW",
+# padding = unit(0.5, "line"))
+
+# Misclassification -------------------------------------------------------------
+misclassification_cnt = sum(ifelse(df$sex_lda == df$sex, 0, 1))
+cat("Misclassification count [LDA]: ", misclassification_cnt, "\n")
+
+misclassification_rate = mean(ifelse(df$sex_lda == df$sex, 0, 1))
+cat("Misclassification rate [LDA]: ", misclassification_rate, "\n")
+
+table(df$sex, df$sex_lda, dnn = c("True", "Predicted"))
+```
+
+
+Repeat step 2 but use priors $p(Male) = 0.9$ and $p(Female) = 0.1$ instead. How did the classification result change and why?
+
+```{r}
+# Conduct lda ------------------------------------------------------------------
+
+# Note: to understand which value is for which class, do table(df$sex)
+# The order of the printed categories is the order of the priors to specify.
+
+lda.model.train = MASS::lda(sex ~ CL + RW, data = df, prior = c(0.1, 0.9)) # LDA
+lda.pred.train = predict(lda.model.train, df) # predict (probs, class etc.)
+lda.class.train = lda.pred.train$class # extract class
+df$sex_lda = lda.class.train # add class to df
+
+# Misclassification -------------------------------------------------------------
+misclassification_cnt = sum(ifelse(df$sex_lda == df$sex, 0, 1))
+cat("Misclassification count [LDA]: ", misclassification_cnt, "\n")
+
+misclassification_rate = mean(ifelse(df$sex_lda == df$sex, 0, 1))
+
+cat("Misclassification rate [LDA]: ", misclassification_rate, "\n")
+table(df$sex, df$sex_lda, dnn = c("True", "Predicted"))
+
+# Compare plots ----------------------------------------------------------------
+p_true = p_true + labs(title = "Color = true sex")
+
+p_lda_unprop = ggplot(df, aes(x = RW, y = CL, fill = sex_lda, color = sex_lda)) +
+  geom_point(shape = 23, size = 2, alpha = 0.8) +
+  scale_x_continuous(limits = c(5, 21), breaks = seq(5, 20, 5)) +
+  scale_y_continuous(limits = c(14, 50), breaks = seq(20, 50, 10)) +
+  labs(color = "Sex", fill = "Sex", title = "Color = classified sex") +
+  theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
+
+p = ggpubr::ggarrange(plotlist = list(p_true, p_lda_unprop), ncol = 2,
+  common.legend = TRUE, legend = "bottom")
+
+ggpubr::annotate_figure(p, top = "Plot of CL by RW [priors: 0.9 Male, 0.1 Female]")
+```
+
+Make a similar kind of classification by logistic regression (use function `glm()`), plot the classified data and compute the misclassification error. Compare these results with the LDA results. Finally, report the equation of the decision boundary and draw it in the plot of classified data.
+
+```{r}
+log.model.train = glm(sex ~ CL + RW, data = df, family = "binomial") # logistic
+log.pred.train = predict(log.model.train, df, type = "response") # Prediction
+log.class.train = ifelse(log.pred.train > 0.5, "Male", "Female") # Classification
+df$sex_log = as.factor(log.class.train) # add class to df
+
+# Misclassification ------------------------------------------------------------
+misclassification_cnt = sum(ifelse(df$sex_log == df$sex, 0, 1))
+cat("Misclassification count [Logistic]: ", misclassification_cnt, "\n")
+
+misclassification_rate = mean(ifelse(df$sex_log == df$sex, 0, 1))
+
+cat("Misclassification rate [Logistic]: ", misclassification_rate, "\n")
+table(df$sex, df$sex_log, dnn = c("True", "Predicted"))
+
+# Comparison LDA vs. Logistic --------------------------------------------------
+# Conduct LDA again to explore difference between LDA and logistic
+lda.model.train = MASS::lda(sex ~ CL + RW, data = df) # LDA
+lda.pred.train = predict(lda.model.train, df) # predict (probs, class etc.)
+lda.class.train = lda.pred.train$class # extract class
+df$sex_lda = lda.class.train # add class to df
+table(df$sex_lda, df$sex_log, dnn = c("LDA", "Log"))
+
+# Compare plots ----------------------------------------------------------------
+p_lda_prop = p_lda_prop + labs(title = "LDA (proportional prior)")
+
+p_log = ggplot(df, aes(x = RW, y = CL, fill = sex_log, color = sex_log)) +
+geom_point(shape = 23, size = 2, alpha = 0.8) +
+  scale_x_continuous(limits = c(5, 21), breaks = seq(5, 20, 5)) +
+  scale_y_continuous(limits = c(14, 50), breaks = seq(20, 50, 10)) +
+  labs(color = "Sex", fill = "Sex", title = "Logistic regression") +
+  theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
+  p = ggpubr::ggarrange(plotlist = list(p_lda_prop, p_log), ncol = 2,
+  common.legend = TRUE, legend = "bottom")
+
+ggpubr::annotate_figure(p, top = "Plot of CL by RW")
+
+# Decision boundary ------------------------------------------------------------
+# Extract and print the boundary
+slope = coef(log.model.train)[3]/(-coef(log.model.train)[2])
+intercept = coef(log.model.train)[1]/(-coef(log.model.train)[2])
+
+cat("Decision boundary: y_hat = ", intercept, " + x * ", slope, "\n")
+
+db = data.frame(slope = slope, intercept = intercept)
+
+p = ggplot(df, aes(x = RW, y = CL, fill = sex_log, color = sex_log)) +
+  geom_point(shape = 23, size = 2, alpha = 0.8) +
+  scale_x_continuous(limits = c(5, 21), breaks = seq(5, 20, 5)) +
+  scale_y_continuous(limits = c(14, 50), breaks = seq(20, 50, 10)) +
+  labs(color = "Sex", fill = "Sex", title = "Logistic regression") +
+  theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
+
+p + geom_abline(intercept = eval(intercept), slope = eval(slope),
+  color = "steelblue3", linetype = "dashed", size = 1)
+```
+
 
 ## Principal Component Analysis (PCA)
 
@@ -1862,10 +2038,6 @@ error_bayes_train_raw = 1 - sum(diag(confusion_matrix_bayes_train)/
 error_bayes_test_raw =  1 - sum(diag(confusion_matrix_bayes_test)/
                               sum(confusion_matrix_bayes_test))
 ```
-
-
-## Probability Model and Log-Likelihood
-From the engineers
 
 ## ROC-Curve
 
