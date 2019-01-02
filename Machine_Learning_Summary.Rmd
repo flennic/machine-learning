@@ -14,7 +14,8 @@ output:
 ---
 
 ```{r setup, include = FALSE}
-knitr::opts_chunk$set(echo = TRUE, cache = TRUE, include = TRUE, eval = FALSE)
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE, include = TRUE, eval = FALSE,
+                      fig.pos = 'H')
 ```
 
 # Terms
@@ -29,31 +30,74 @@ There's a bias-variance tradeoff between setting the degrees of freedom. The mor
 Boosting is a two-step approach, where one first uses subsets of the original data to produce a series of averagely performing models and then "boosts" their performance by combining them together using a particular cost function (=majority vote). Unlike bagging, in the classical boosting the subset creation is not random and depends upon the performance of the previous models: every new subsets contains the elements that were (likely to be) misclassified by previous models.
 
 ## Curse of Dimensionality
-The curse of dimensionality refers to various phenomena that arise when analyzing and organizing data in high-dimensional spaces (often with hundreds or thousands of dimensions) that do not occur in low-dimensional settings such as the three-dimensional physical space of everyday experience. The expression was coined by Richard E. Bellman when considering problems in dynamic optimization.[1][2]
+The curse of dimensionality refers to various phenomena that arise when analyzing and organizing data in high-dimensional spaces (often with hundreds or thousands of dimensions) that do not occur in low-dimensional settings such as the three-dimensional physical space of everyday experience. The expression was coined by Richard E. Bellman when considering problems in dynamic optimization.
 
 Cursed phenomena occur in domains such as numerical analysis, sampling, combinatorics, machine learning, data mining and databases. The common theme of these problems is that when the dimensionality increases, the volume of the space increases so fast that the available data become sparse. This sparsity is problematic for any method that requires statistical significance. In order to obtain a statistically sound and reliable result, the amount of data needed to support the result often grows exponentially with the dimensionality. Also, organizing and searching data often relies on detecting areas where objects form groups with similar properties; in high dimensional data, however, all objects appear to be sparse and dissimilar in many ways, which prevents common data organization strategies from being efficient
 
 ## Degrees of Freedom
-**Definition:** : The degrees of freedom is the values in the final calculation of a statistic that are free to vary.
-**Example**: Example: If you know that mean of 4 numbers is 20, and two of those numbers are 40, 50. This means that if you can find out one of the remaining numbers (say x), you can tell with certainty that the last number (say y) will be $y = 20 - ((40 + 50 + x) / 3)$ i.e. you have one degree of freedom
+
+**Definition:** The degrees of freedom is the values in the final calculation of a statistic that are free to vary.
+
+**Example:** Example: If you know that mean of 4 numbers is 20, and two of those numbers are 40, 50. This means that if you can find out one of the remaining numbers (say x), you can tell with certainty that the last number (say y) will be $y = 20 - ((40 + 50 + x) / 3)$ i.e. you have one degree of freedom
 
 - In Machine learning theory, the independent variables on which the target depends on are called the degrees of freedom.
 - Need of degree of freedom: It is important to know which variables does the model depend on. This can then be used for feature selection.
 - Impact of degrees of freedom on Machine learning model: There's a bias-variance tradeoff between setting the degrees of freedom. The more variables you have, more complex your model is. But it tends to overfit. So there must be a balance in selecting the variables.
 
-## Generative vs Discriminative
+## Generative and Discriminative Models
+Let's say you have input data x and you want to classify the data into labels y. A generative model learns the joint probability distribution $p(x,y)$ and a discriminative model learns the conditional probability distribution $p(y|x)$ - which you should read as "the probability of y given x".
+
+| $p(x,y)$ |  y=0 |  y=1 |
+|----------|------|------|
+|      x=1 |  1/2 |    0 |
+|      x=2 |  1/4 |  1/4 |
+
+|  $p(x\rvert y)$ |  y=0 |  y=1 |
+|-----------------|------|------|
+|             x=1 |    1 |    0 |
+|             x=2 |  1/2 |  1/2 |
+
+If you take a few minutes to stare at those two matrices, you will understand the difference between the two probability distributions.
+
+The distribution $p(y|x)$ is the natural distribution for classifying a given example x into a class y, which is why algorithms that model this directly are called discriminative algorithms. Generative algorithms model $p(x,y)$, which can be transformed into $p(y|x)$ by applying Bayes rule and then used for classification. However, the distribution $p(x,y)$ can also be used for other purposes. For example, you could use $p(x,y)$ to generate likely $(x,y)$ pairs.
+
+From the description above, you might be thinking that generative models are more generally useful and therefore better, but it's not as simple as that. This paper is a very popular reference on the subject of discriminative vs. generative classifiers, but it's pretty heavy going. The overall gist is that discriminative models generally outperform generative models in classification tasks
 
 ## Kernel Trick
+The kernel trick is based on some concepts: you have a dataset, e.g. two classes of 2D data, represented on a cartesian plane. It is not linearly separable, so for example a SVM could not find a line that separates the two classes. Now, what you can do it project this data into an higher dimension space, for example 3D, where it could be divided linearly by a plane.
 
-## Mean Squared Error (MSE)
-
-## Misclassification Rate
+Now, a basic concept in ML is the dot product. You often do dot products of the features of a data sample with some weights w, the parameters of your model. Instead of doing explicitly this projection of the data in 3D and then evaluating the dot product, you can find a kernel function that simplifies this job by simply doing the dot product in the projected space for you, without the need to actually compute projections and then the dot product. This allows you to find a complex non linear boundary that is able to separate the classes in the dataset. This is a very intuitive explainatio
 
 ## No Free Lunch Theorem
+The "No Free Lunch" theorem states that there is no one model that works best for every problem.  The assumptions of a great model for one problem may not hold for another problem, so it is common in machine learning to try multiple models and find one that works best for a particular problem.  This is especially true in supervised learning; validation or cross-validation is commonly used to assess the predictive accuracies of multiple models of varying complexity to find the best model.  A model that works well could also be trained by multiple algorithms - for example, linear regression could be trained by the normal equations or by gradient descent.
 
 ## Ordinary Least Squares Regression (OLS)
+In statistics, ordinary least squares (OLS) is a type of linear least squares method for estimating the unknown parameters in a linear regression model. OLS chooses the parameters of a linear function of a set of explanatory variables by the principle of least squares: minimizing the sum of the squares of the differences between the observed dependent variable (values of the variable being predicted) in the given dataset and those predicted by the linear function.
 
 ## Parametric and Non-Parametric Models
+
+**Parametric models**
+A learning model that summarizes data with a set of parameters of fixed size (independent of the number of training examples). No matter how much data you throw at a parametric model, it won't change its mind about how many parameters it needs.
+
+Some examples of parametric machine learning algorithms are:
+
+- Linear Regression
+- Linear Support Vector Machines
+- Logistic Regression
+- Naive Bayes
+- Perceptron
+    
+**Nonparametric models**
+Nonparametric methods are good when you have a lot of data and no prior knowledge, and when you don't want to worry too much about choosing just the right features.
+
+Some examples of nonparametric models are:
+
+- Decision Trees
+- K-Nearest Neighbor
+- Support Vector Machines with Gaussian Kernels
+- Artificial Neural Networks
+    
+In conclusion with parametric models to predict new data, you only need to know the parameters of the model. In nonparametric methods are more flexible and for forecasting new data you need to know the parameters of the model and the state of the data that has been observed.
 
 ## Stacking
 Stacking is a similar to boosting: you also apply several models to your original data. The difference here is, however, that you don't have just an empirical formula for your weight function, rather you introduce a meta-level and use another model/approach to estimate the input together with outputs of every model to estimate the weights or, in other words, to determine what models perform well and what badly given these input data.
@@ -61,16 +105,55 @@ Stacking is a similar to boosting: you also apply several models to your origina
 ## Types of Learning
 
 ### Active Learning
+Active learning is a special case of machine learning in which a learning algorithm is able to interactively query the user (or some other information source) to obtain the desired outputs at new data points. In statistics literature it is sometimes also called optimal experimental design.
+
+In active learning, the algorithm gets a lot of data, but not the labels. The algorithm can then explicitly request labels to individual examples. This can be helpful when we have a large amount of unlabeled data, and we want the examples that we label manually to be as helpful for learning as possible.
+
+Let's say you want to find faces in YouTube videos. The labels for the algorithm would be bounding boxes around the faces in each video frame. However, there are so many videos with so many frames, that we can't label all of them manually.
+
+We could just label 100 videos frame by frame, but that would be a lot of wasted effort. Since following frames are often similar, the algorithm might not benefit very much from each consecutive frames being labeled.
+
+In active learning, the algorithm tries to both learn the task and tell us what labels would be most useful at the current state. We can then label just those frames, so that the manual effort is directed best.
 
 ### Reinforcement Learning
+This method aims at using observations gathered from the interaction with the environment to take actions that would maximize the reward or minimize the risk. Reinforcement learning algorithm (called the agent) continuously learns from the environment in an iterative fashion. In the process, the agent learns from its experiences of the environment until it explores the full range of possible states.
+
+Reinforcement Learning is a type of Machine Learning, and thereby also a branch of Artificial Intelligence. It allows machines and software agents to automatically determine the ideal behavior within a specific context, in order to maximize its performance. Simple reward feedback is required for the agent to learn its behavior; this is known as the reinforcement signal.
 
 ### Semi-supervised
+In the previous two types, either there are no labels for all the observation in the dataset or labels are present for all the observations. Semi-supervised learning falls in between these two. In many practical situations, the cost to label is quite high, since it requires skilled human experts to do that. So, in the absence of labels in the majority of the observations but present in few, semi-supervised algorithms are the best candidates for the model building. These methods exploit the idea that even though the group memberships of the unlabeled data are unknown, this data carries important information about the group parameters.
 
 ### Supervised Learning
 
+- I like to think of supervised learning with the concept of function approximation, where basically we train an algorithm and in the end of the process we pick the function that best describes the input data, the one that for a given X makes the best estimation of y (X -> y). Most of the time we are not able to figure out the true function that always make the correct predictions and other reason is that the algorithm rely upon an assumption made by humans about how the computer should learn and this assumptions introduce a bias, Bias is topic I'll explain in another post.
+- Here the human experts acts as the teacher where we feed the computer with training data containing the input/predictors and we show it the correct answers (output) and from the data the computer should be able to learn the patterns.
+- Supervised learning algorithms try to model relationships and dependencies between the target prediction output and the input features such that we can predict the output values for new data based on those relationships which it learned from the previous data sets.
+
 ### Unsupervised Learning
 
+- The computer is trained with unlabeled data.
+- Here there's no teacher at all, actually the computer might be able to teach you new things after it learns patterns in data, these algorithms a particularly useful in cases where the human expert doesn't know what to look for in the data.
+- It's a family of machine learning algorithms which are mainly used in pattern detection and descriptive modeling. However, there are no output categories or labels here based on which the algorithm can try to model relationships. These algorithms try to use techniques on the input data to mine for rules, detect patterns, and summarize and group the data points which help in deriving meaningful insights and describe the data better to the users.
+
 ## Under- and Overfitting
+
+**Overfitting in Machine Learning**
+
+Overfitting refers to a model that models the training data too well.
+
+Overfitting happens when a model learns the detail and noise in the training data to the extent that it negatively impacts the performance of the model on new data. This means that the noise or random fluctuations in the training data is picked up and learned as concepts by the model. The problem is that these concepts do not apply to new data and negatively impact the models ability to generalize.
+
+Overfitting is more likely with nonparametric and nonlinear models that have more flexibility when learning a target function. As such, many nonparametric machine learning algorithms also include parameters or techniques to limit and constrain how much detail the model learns.
+
+For example, decision trees are a nonparametric machine learning algorithm that is very flexible and is subject to overfitting training data. This problem can be addressed by pruning a tree after it has learned in order to remove some of the detail it has picked up.
+
+**Underfitting in Machine Learning**
+
+Underfitting refers to a model that can neither model the training data nor generalize to new data.
+
+An underfit machine learning model is not a suitable model and will be obvious as it will have poor performance on the training data.
+
+Underfitting is often not discussed as it is easy to detect given a good performance metric. The remedy is to move on and try alternate machine learning algorithms. Nevertheless, it does provide a good contrast to the problem of overfitting.
 
 # Useful Code Snippets
 
@@ -1797,6 +1880,21 @@ c_best_subset_selection = function(Y, X) {
 
 
 ### Nested Cross Validation
+
+![Nested Cross Validation](nested_cross_validation.png)
+
+- Divide the dataset into $K$ cross-validation folds at random.
+- For each fold $k=1,2,. ,K$: outer loop for evaluation of the model with selected hyperparameter
+    - Let `test` be fold $k$
+    - Let `trainval` be all the data except those in fold $k$
+    - Randomly split `trainval` into $L$ folds
+    - For each fold $l=1,2,., L$: inner loop for hyperparameter tuning
+        - Let `val` be fold $l$
+        - Let `train` be all the data except those in `test` or `val`
+        - Train with each hyperparameter on `train`, and evaluate it on `val`. Keep track of the performance metrics
+    - For each hyperparameter setting, calculate the average metrics score over the $L$ folds, and choose the best hyperparameter setting.
+    - Train a model with the best hyperparameter on `trainval`. Evaluate its performance on `test` and save the score for fold $k$.
+- Calculate the mean score over all $K$ folds, and report as the generalization error.
 
 ### Two-Fold
 
