@@ -3,13 +3,13 @@ title: "Machine Learning Summary"
 author: "Maximilian Pfundstein"
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
-    toc: true
-    toc_depth: 3
-    number_sections: true
   html_document:
     df_print: paged
     toc_float: true
+    number_sections: true
+  pdf_document:
+    toc: true
+    toc_depth: 3
     number_sections: true
 ---
 
@@ -167,9 +167,6 @@ error_rate =
 print(error_rate)
 ```
 
-## Custom Error Function
-Gam and Tree
-
 ## Feature Plot
 
 ```{r}
@@ -282,9 +279,15 @@ knitr::opts_chunk$set(echo = FALSE, cache = TRUE, include = TRUE, eval = FALSE)
 
 ## Bayesian Classification
 
+- Prediction $\widehat{Y}(x) = C_l$ and $l=arg_{i\epsilon\{1,...,m\}} max p(C_i|x)$
+- Bayes Theorem $p(C_i|x) = \frac{p(x|C_i)p(C_i)}{p(x)}$
+- WE get $p(C_i|x) \propto \frac{K_i}{K}$
+
 ## Boosting
 
 ### AdaBoost
+
+`blackboost()` from package `mboost.`
 
 ```{r}
 c_adaBoost = blackboost(formula = c_formula,
@@ -293,10 +296,15 @@ c_adaBoost = blackboost(formula = c_formula,
                           control=boost_control(mstop=i))
 ```
 
+![Ada Boost Algorithm](ada_boost_algorithm.png)
 
 ### Forward Stagewise Additive Modeling
 
+![Forward Stagewise Additive Modeling](forward_stagewise_additive_modeling.png)
+
 ### Gradient Boosting
+
+![Gradient Boosting Algorithm](gradient_boosting_algorithm.png)
 
 ## Elastic Net
 
@@ -471,12 +479,91 @@ spambase_predict_train =
         FUN = function(x) return(x > 0.5))
 ```
 
-
 - Response Poisson distributed
 - Canonical Link (log) is used for regression
 - probabilistic expression for the fitted model
 
 ## K-Nearest Neighbour (KNN)
+
+### Implementation
+
+```{r}
+knearest = function(data, K = 5, newdata) {
+  
+  # Internal Function to calculate D
+  d = function(X, Y) {
+    
+    # Make sure the input in the matrix format
+    X = as.matrix(X)
+    Y = as.matrix(Y)
+    
+    # Calculate D as described in the exercise
+    X_hat = X/sqrt(rowSums(X^2))
+    Y_hat = Y/sqrt(rowSums(Y^2))
+    C = X_hat %*% t(Y_hat)
+    D = 1 - C
+    
+    return(D)  
+  }
+  
+  # Get D (trim classification column)
+  D = d(data[,-49], newdata[-49])
+  
+  classificationRate = c()
+  classification = c()
+  classifiedCorrectly = c()
+  
+  # For each data entry
+  for (i in 1:nrow(D)) {
+    # Sort the distances and also get their index
+    sortedRow = sort(D[,i], index.return = TRUE)
+    
+    # Take the K best guys and save their indexed
+    indexesKnn = sortedRow$ix[1:K]
+    
+    # Lookup if they're classified as 0 or 1
+    classificationRates = data$Spam[indexesKnn]
+    
+    # Add the classification
+    classificationRate = c(classificationRate,
+                           (sum(data$Spam[indexesKnn] / K)))
+    temp_classification = sum(data$Spam[indexesKnn]) > (K/2)
+    classification = c(classification, temp_classification)
+    classifiedCorrectly =
+      c(classifiedCorrectly, temp_classification != as.logical(newdata$Spam[i]))
+  }
+  
+  returnDataFrame = cbind(newdata, classificationRate)
+  returnDataFrame = cbind(returnDataFrame, classification)
+  returnDataFrame = cbind(returnDataFrame, classifiedCorrectly)
+  
+  return(returnDataFrame)
+}
+
+# Set seed and import data from excel
+set.seed(12345)
+spambase = read_excel("spambase.xlsx")
+
+# Shuffle the data
+n = dim(spambase)[1]
+id = sample(1:n, floor(n*0.5))
+c_data = spambase[id,]
+c_newdata = spambase[-id,]
+
+# Get the missqualification rates for training and  test
+training_classification = knearest(c_data, K = 30, c_data)
+test_classification = knearest(c_data, K = 30, c_newdata)
+
+# Get the classification rate
+training_rate = sum(training_classification$classifiedCorrectly/
+  nrow(training_classification))
+test_rate = sum(test_classification$classifiedCorrectly/
+  nrow(test_classification))
+
+```
+
+
+### Library
 
 ```{r}
 kknn_model_train = kknn(formula = Spam ~ ., train = train, test = train, k = 30)
@@ -513,6 +600,15 @@ print(paste(sep = "", "Best lambda score: ", lasso_vc$lambda.min))
 
 
 ## Least Absolute Deviation Regression
+
+Package `L1pack`.
+
+- Model $Y\sim Laplace(w^TX,b)$
+- Equivalent to minimizing sum of absolute deviations
+- Properties
+    - Robust to outliers
+    - Sensitive tochangesindata
+    - Multiplesolutions possible
 
 ## Linear Regression
 
@@ -647,6 +743,8 @@ padding = unit(0.5, "line"))
 ## Naive Bayes
 
 ### Library
+
+Package `e1071`.
 
 ```{r}
 naiveBayesModel = naiveBayes(good_bad ~ ., data = train)
@@ -802,6 +900,8 @@ print(paste("Error Validation:", error_val_scn))
 Limitations and Types
 
 ### Backpropagation Implementation
+
+![Backpropagartion Algorithm](backpropagation_algorithm.png)
 
 ```{r}
 # Helper function for the derivative
@@ -1037,12 +1137,20 @@ ggtitle("Comparison of neural network prediction with training data") +
 labs(color = "Legend")
 ```
 
-
 ### Regularization
+
+![Regularization](regularization.png)
 
 ## Partial Least Squares Regression (PLS)
 
 ## Quadratic Discriminant Analysis
+
+Is a generative classifier, main assumptions: x is now **random** as well as y.
+  
+$p(x|y=C_i,\theta) = N(x|\mu _i,\Sigma_i)$
+
+Unknown parameters $\theta = \{\mu _i,\Sigma_i\}$
+
 
 ## Ridge Regression
 
@@ -1198,9 +1306,11 @@ c_randomForest =
     randomForest(formula = c_formula, data = train_spambase, ntree = i)
 ```
 
+![Random Forest Algorithm](random_forest_algorithm.png)
 
-Decision,
-Blackboost, CART
+### CART
+
+![Cart](cart.png)
 
 # Feature Reduction
 
@@ -1532,9 +1642,21 @@ plot(U[,2], main = "Traceplot, PC2")
 ```
 
 ### Kernel PCA
-kpca in kernlab
+`kpca` in package `kernlab`.
+
+```{r}
+library(kernlab)
+K = as.kernelMatrix(crossprod(t(x)))
+res = kpca(K)
+barplot(res@eig)
+plot(res@rotated[,1], res@rotated[,2], xlab="PC1",ylab="PC2")
+```
 
 ## Regularized Discriminant Analysis
+`rda()` in package `klaR`.
+
+## Regularized Logistic Regression
+`LiblineaR()` in package `LiblineaR`.
 
 # Miscellaneous
 
@@ -1896,8 +2018,6 @@ c_best_subset_selection = function(Y, X) {
     - Train a model with the best hyperparameter on `trainval`. Evaluate its performance on `test` and save the score for fold $k$.
 - Calculate the mean score over all $K$ folds, and report as the generalization error.
 
-### Two-Fold
-
 ## EM-Algorithm
 
 Let's have a look at the mathematical equations and how we can derive our formulas for the matrix multiplication from that. Formulas without a source are either taken from the lecture slides or derived by previous formulas.
@@ -2026,9 +2146,73 @@ plot(llik[1:it], type="o")
 
 ## Holdout-Principle
 
+Divide into training, validation and test set. Code is found in the snippets section.
+
+## Hypothesis Testing
+
+```{r}
+res = t.test(MFCC_2nd.coef~Quality,data=data, alternative="two.sided")
+res$p.value
+```
+
+```{r}
+res = oneway_test(MFCC_2nd.coef~as.factor(Quality), data=data,paired=FALSE)
+pvalue(res)
+```
+
+
+
 ## K-Means Algorithm
 
-## Kernel Density Estimation
+## (Kernel) Density Estimation
+
+### Density Estimation
+
+```{r}
+density_estimation = function(data, K = 6, X) {
+  
+  N = length(data)
+  S = data
+  
+  # V needs to be calculated, first get all distances
+  distances = abs(X - S)
+  
+  # Sort them the get the K nearest and get their indexes
+  sorted_distances = sort(distances, index.return = TRUE)
+  idx_knearest = sorted_distances$ix[1:K]
+  
+  # We take the point which is furthest away and take it as the "radius" to get
+  # the V (linear)
+  V = 2 * max(abs(data[idx_knearest[K]] - X))
+  
+  # Returns based on formula from slides
+  return(K/(N*V))
+}
+
+# Get the min and max from the dataset and define a stepsize
+min_speed = min(cars$speed)
+max_speed = max(cars$speed)
+steps = 1000
+
+# X-Values are a sequence from min_speed to max_speed
+x_values =   seq(min_speed, max_speed, by = (max_speed - min_speed)/steps)
+
+# Y-Values are the density estimation at each point
+y_values = unlist(lapply(x_values,
+                         function(x) density_estimation(cars$speed, K = 6, x)))
+
+# Put them into a dataframe
+density_data_frame = data.frame(x_values, y_values)
+colnames(density_data_frame) = c("X", "Density")
+
+# Plot the data
+print(ggplot(density_data_frame) +
+  geom_histogram(data = cars, bins = 21) + aes(x = speed, y = ..density..) + 
+  geom_line(aes(x = X, y = Density, colour = "Density Function")) +
+  labs(title="Density of cars$speed", y="Density", x="X", color = "Legend") +
+  scale_color_manual(values = c("orange")))
+```
+
 
 Epanechnikov kernel
 Exam 2015 2.3
@@ -2108,7 +2292,16 @@ ggplot(plot_data_frame) +
 
 ### Histogram Classification
 
-### Moving Windows Classification
+![Histogram Classification](histogram_classification.png)
+
+### Moving Window Classification
+
+![Moving Window Classification](moving_window_classification.png)
+
+### Kernel Classification
+
+![Kernel Classification](kernel_classification.png)
+
 
 ## Loss-Matrix
 
