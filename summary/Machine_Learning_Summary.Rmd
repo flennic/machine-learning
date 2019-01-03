@@ -3,13 +3,13 @@ title: "Machine Learning Summary"
 author: "Maximilian Pfundstein"
 date: "`r Sys.Date()`"
 output:
-  html_document:
-    df_print: paged
-    toc_float: true
-    number_sections: true
   pdf_document:
     toc: true
     toc_depth: 3
+    number_sections: true
+  html_document:
+    df_print: paged
+    toc_float: true
     number_sections: true
 ---
 
@@ -1143,6 +1143,8 @@ labs(color = "Legend")
 
 ## Partial Least Squares Regression (PLS)
 
+**Cannot find the slides to this or from where this is coming from. Maybe an old exam?!**
+
 ## Quadratic Discriminant Analysis
 
 Is a generative classifier, main assumptions: x is now **random** as well as y.
@@ -1888,6 +1890,8 @@ ggplot(pruned_tree_plot_dataframe_p_pb) +
 
 ### Cross Validation Plot
 
+**This was aksed somewhere (maybe exam?), so clarify what's meant here!
+
 ### K-Fold
 
 ```{r}
@@ -2164,7 +2168,17 @@ pvalue(res)
 
 ## K-Means Algorithm
 
-## (Kernel) Density Estimation
+1. Assign each point to a cluster (a.k.a subpopulation) at random
+2. Compute the cluster centroids as the averages of the points assigned to each cluster
+3. Repeat until the centroids do not change
+4. Assign each point to the cluster with the closest centroid
+5. Update the cluster centroids as the averages of the points assigned to each cluster
+
+![K-Means Algorithm](k_means_algorithm.png)
+
+## Histogram, Moving Window and Kernel Density Estimation
+
+![Histogram, Moving Window and Kernel Density Estimation](histogram_moving_window_kernel_density_estimation.png)
 
 ### Density Estimation
 
@@ -2289,6 +2303,10 @@ ggplot(plot_data_frame) +
 
 ```
 
+
+### Histogram, Moving Window and Kernel Regression
+
+![Histogram, Moving Window and Kernel Regression](histogram_moving_window_kernel_regression.png)
 
 ### Histogram Classification
 
