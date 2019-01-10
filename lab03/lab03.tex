@@ -122,7 +122,7 @@
   \postauthor{\par}
       \predate{\centering\large\emph}
   \postdate{\par}
-    \date{2018-12-14}
+    \date{2019-01-07}
 
 
 \begin{document}
@@ -207,10 +207,11 @@ somewhat fast (we're still using R in the end).
 
 \NormalTok{min_distance =}\StringTok{ }\ControlFlowTok{function}\NormalTok{(a, b, ringSize) \{}
   
-\NormalTok{  boundOne =}\StringTok{ }\KeywordTok{sapply}\NormalTok{(b, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x) }\KeywordTok{abs}\NormalTok{(a }\OperatorTok{-}\StringTok{ }\NormalTok{x))}
-\NormalTok{  boundTwo =}\StringTok{ }\KeywordTok{sapply}\NormalTok{(b, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x) }\KeywordTok{abs}\NormalTok{(a }\OperatorTok{+}\StringTok{ }\NormalTok{ringSize }\OperatorTok{-}\StringTok{ }\NormalTok{x))}
+\NormalTok{  boundOne =}\StringTok{ }\KeywordTok{parSapply}\NormalTok{(cl, b, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x) }\KeywordTok{abs}\NormalTok{(a }\OperatorTok{-}\StringTok{ }\NormalTok{x))}
+\NormalTok{  boundTwo =}\StringTok{ }\KeywordTok{parSapply}\NormalTok{(cl, b, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x) }\KeywordTok{abs}\NormalTok{(a }\OperatorTok{-}\StringTok{ }\NormalTok{ringSize }\OperatorTok{-}\StringTok{ }\NormalTok{x))}
+\NormalTok{  boundThree =}\StringTok{ }\KeywordTok{parSapply}\NormalTok{(cl, b, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x) }\KeywordTok{abs}\NormalTok{(a }\OperatorTok{+}\StringTok{ }\NormalTok{ringSize }\OperatorTok{-}\StringTok{ }\NormalTok{x))}
     
-  \KeywordTok{return}\NormalTok{(}\KeywordTok{pmin}\NormalTok{(boundOne, boundTwo))}
+  \KeywordTok{return}\NormalTok{(}\KeywordTok{pmin}\NormalTok{(boundOne, boundTwo, boundThree))}
 \NormalTok{\}}
 \end{Highlighting}
 \end{Shaded}
@@ -268,11 +269,11 @@ and returns the results using the Gaussian Kernel.
 
 \NormalTok{kernel_gauss_hour =}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (hourA, hourB, smoothing) \{}
   
-\NormalTok{  hourA_in_h =}\StringTok{ }\KeywordTok{sapply}\NormalTok{(hourA}\OperatorTok{$}\NormalTok{time, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x)}
+\NormalTok{  hourA_in_h =}\StringTok{ }\KeywordTok{parSapply}\NormalTok{(cl, hourA}\OperatorTok{$}\NormalTok{time, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x)}
     \KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{difftime}\NormalTok{(}\KeywordTok{strptime}\NormalTok{(x, }\DataTypeTok{format =} \StringTok{"%H:%M:%S"}\NormalTok{),}
                         \KeywordTok{strptime}\NormalTok{(}\StringTok{"00:00:00"}\NormalTok{, }\DataTypeTok{format =} \StringTok{"%H:%M:%S"}\NormalTok{))))}
   
-\NormalTok{  hourB_in_h =}\StringTok{ }\KeywordTok{sapply}\NormalTok{(hourB}\OperatorTok{$}\NormalTok{time, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x)}
+\NormalTok{  hourB_in_h =}\StringTok{ }\KeywordTok{parSapply}\NormalTok{(cl, hourB}\OperatorTok{$}\NormalTok{time, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x)}
     \KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{difftime}\NormalTok{(}\KeywordTok{strptime}\NormalTok{(x, }\DataTypeTok{format =} \StringTok{"%H:%M:%S"}\NormalTok{),}
                         \KeywordTok{strptime}\NormalTok{(}\StringTok{"00:00:00"}\NormalTok{, }\DataTypeTok{format =} \StringTok{"%H:%M:%S"}\NormalTok{))))}
   
@@ -332,6 +333,10 @@ reasonable (it's colder at nights) and the temperature seems reasonable
 as well (maybe not that much for the sum, but that's okay as it's not a
 good model). The only ``akward'' thing to obersve is the ``bumby''
 temperate drop at the end of the day.
+
+\begin{verbatim}
+## [1] 0.2037454 0.2037454 0.2037454 0.2037454 0.2037454 0.2037454
+\end{verbatim}
 
 \includegraphics{lab03_files/figure-latex/unnamed-chunk-6-1.pdf}
 
@@ -447,6 +452,8 @@ error. Normally C and \(\epsilon\) are selected by Cross-Validation.
 \KeywordTok{library}\NormalTok{(geosphere)}
 \KeywordTok{library}\NormalTok{(ggplot2)}
 \KeywordTok{library}\NormalTok{(kernlab)}
+\KeywordTok{library}\NormalTok{(parallel)}
+\NormalTok{cl =}\StringTok{ }\KeywordTok{makeCluster}\NormalTok{(}\KeywordTok{detectCores}\NormalTok{())}
 
 
 \NormalTok{################################################################################}
@@ -457,10 +464,11 @@ error. Normally C and \(\epsilon\) are selected by Cross-Validation.
 
 \NormalTok{min_distance =}\StringTok{ }\ControlFlowTok{function}\NormalTok{(a, b, ringSize) \{}
   
-\NormalTok{  boundOne =}\StringTok{ }\KeywordTok{sapply}\NormalTok{(b, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x) }\KeywordTok{abs}\NormalTok{(a }\OperatorTok{-}\StringTok{ }\NormalTok{x))}
-\NormalTok{  boundTwo =}\StringTok{ }\KeywordTok{sapply}\NormalTok{(b, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x) }\KeywordTok{abs}\NormalTok{(a }\OperatorTok{+}\StringTok{ }\NormalTok{ringSize }\OperatorTok{-}\StringTok{ }\NormalTok{x))}
+\NormalTok{  boundOne =}\StringTok{ }\KeywordTok{parSapply}\NormalTok{(cl, b, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x) }\KeywordTok{abs}\NormalTok{(a }\OperatorTok{-}\StringTok{ }\NormalTok{x))}
+\NormalTok{  boundTwo =}\StringTok{ }\KeywordTok{parSapply}\NormalTok{(cl, b, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x) }\KeywordTok{abs}\NormalTok{(a }\OperatorTok{-}\StringTok{ }\NormalTok{ringSize }\OperatorTok{-}\StringTok{ }\NormalTok{x))}
+\NormalTok{  boundThree =}\StringTok{ }\KeywordTok{parSapply}\NormalTok{(cl, b, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x) }\KeywordTok{abs}\NormalTok{(a }\OperatorTok{+}\StringTok{ }\NormalTok{ringSize }\OperatorTok{-}\StringTok{ }\NormalTok{x))}
     
-  \KeywordTok{return}\NormalTok{(}\KeywordTok{pmin}\NormalTok{(boundOne, boundTwo))}
+  \KeywordTok{return}\NormalTok{(}\KeywordTok{pmin}\NormalTok{(boundOne, boundTwo, boundThree))}
 \NormalTok{\}}
 
 
@@ -488,11 +496,11 @@ error. Normally C and \(\epsilon\) are selected by Cross-Validation.
 
 \NormalTok{kernel_gauss_hour =}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (hourA, hourB, smoothing) \{}
   
-\NormalTok{  hourA_in_h =}\StringTok{ }\KeywordTok{sapply}\NormalTok{(hourA}\OperatorTok{$}\NormalTok{time, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x)}
+\NormalTok{  hourA_in_h =}\StringTok{ }\KeywordTok{parSapply}\NormalTok{(cl, hourA}\OperatorTok{$}\NormalTok{time, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x)}
     \KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{difftime}\NormalTok{(}\KeywordTok{strptime}\NormalTok{(x, }\DataTypeTok{format =} \StringTok{"%H:%M:%S"}\NormalTok{),}
                         \KeywordTok{strptime}\NormalTok{(}\StringTok{"00:00:00"}\NormalTok{, }\DataTypeTok{format =} \StringTok{"%H:%M:%S"}\NormalTok{))))}
   
-\NormalTok{  hourB_in_h =}\StringTok{ }\KeywordTok{sapply}\NormalTok{(hourB}\OperatorTok{$}\NormalTok{time, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x)}
+\NormalTok{  hourB_in_h =}\StringTok{ }\KeywordTok{parSapply}\NormalTok{(cl, hourB}\OperatorTok{$}\NormalTok{time, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(x)}
     \KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{difftime}\NormalTok{(}\KeywordTok{strptime}\NormalTok{(x, }\DataTypeTok{format =} \StringTok{"%H:%M:%S"}\NormalTok{),}
                         \KeywordTok{strptime}\NormalTok{(}\StringTok{"00:00:00"}\NormalTok{, }\DataTypeTok{format =} \StringTok{"%H:%M:%S"}\NormalTok{))))}
   
@@ -526,7 +534,7 @@ error. Normally C and \(\epsilon\) are selected by Cross-Validation.
 \NormalTok{compare_value_hour =}\StringTok{ }\KeywordTok{list}\NormalTok{(}\DataTypeTok{time =} \StringTok{"12:30:00"}\NormalTok{)}
 
 \CommentTok{# Smoothing factors}
-\NormalTok{h_distance =}\StringTok{ }\DecValTok{150000} \CommentTok{#150000}
+\NormalTok{h_distance =}\StringTok{ }\DecValTok{300000} \CommentTok{#150000}
 \NormalTok{h_date =}\StringTok{ }\DecValTok{30} \CommentTok{#30}
 \NormalTok{h_time =}\StringTok{ }\DecValTok{3} \CommentTok{#3}
 
@@ -606,6 +614,8 @@ error. Normally C and \(\epsilon\) are selected by Cross-Validation.
 \NormalTok{  kernel_distance =}\StringTok{ }\KeywordTok{kernel_gauss_distance}\NormalTok{(}\KeywordTok{list}\NormalTok{(}
       \DataTypeTok{latitude =}\NormalTok{ u_latitude, }\DataTypeTok{longitude =}\NormalTok{ u_longitude), st, h_distance)}
   
+  \KeywordTok{print}\NormalTok{(}\KeywordTok{head}\NormalTok{(kernel_distance))}
+  
   \CommentTok{# Day Kernel}
 \NormalTok{  kernel_day =}\StringTok{ }\KeywordTok{kernel_gauss_day}\NormalTok{(}\KeywordTok{list}\NormalTok{(}\DataTypeTok{date =}\NormalTok{ u_date), st, h_date)}
   
@@ -633,10 +643,12 @@ error. Normally C and \(\epsilon\) are selected by Cross-Validation.
 \KeywordTok{set.seed}\NormalTok{(}\DecValTok{1234567890}\NormalTok{)}
 
 \CommentTok{# Linkoeping}
+\CommentTok{#latitude = 58.4274}
+\CommentTok{#longitude = 14.826}
 \NormalTok{latitude =}\StringTok{ }\FloatTok{58.4166}
 \NormalTok{longitude =}\StringTok{ }\FloatTok{15.6333}
 \NormalTok{date =}\StringTok{ "2000-05-08"}
-\CommentTok{#date = "2018-12-14"}
+\CommentTok{#date = "2013-11-04"}
 
 
 \CommentTok{# Students' code here}

@@ -3,12 +3,12 @@ title: "Machine Learning Lab 01"
 author: "Maximilian Pfundstein (maxpf364)"
 date: "11/16/2018"
 output:
-  html_document:
-    df_print: paged
-    toc_float: true
   pdf_document:
     toc: true
     toc_depth: 3
+  html_document:
+    df_print: paged
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}

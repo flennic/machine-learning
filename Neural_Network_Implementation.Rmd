@@ -1,0 +1,122 @@
+---
+title: "Neural Network Implementation"
+author: "Maximilian Pfundstein"
+date: "January 10, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Neural Network Implementation
+
+```{r}
+
+nnh10 = setRefClass("nnh10",
+   fields = list(omega0 = "numeric", beta0 = "numeric",
+                 omega1 = "numeric", beta1 = "numeric",
+                 z1 = "matrix", h = "matrix", o = "matrix",
+                 alpha = "numeric", training_data = "data.frame"),
+   methods = list(
+     initialize = function(i_omega0, i_beta0, i_omega1, i_beta1, i_training_data,
+                           i_alpha = 0.1) {
+       
+       ## Assignemnt Logic
+       omega0 <<- i_omega0
+       beta0 <<- i_beta0
+       omega1 <<- i_omega1
+       beta1 <<- i_beta1
+       alpha <<- i_alpha
+       training_data <<- i_training_data
+       
+     },
+     tanh_prime = function (x) {
+       return(1 - (tanh(x) ^ 2))
+     },
+     forward = function(batch) {
+       
+       z1 <<- as.matrix(batch$X) %*% t(as.matrix(omega0)) + beta0
+       h <<- tanh(z1)
+       o <<- h %*% as.matrix(omega1) + beta1
+       
+     },
+     backward = function(batch) {
+       
+       # Why not dot product?
+       delta = (1/nrow(batch) * (o - batch$Y))
+       
+       # Derivatives
+       d_beta1 = mean(delta)
+       d_omega1 = t(d_beta1) %*% h
+       d_beta0 = t(as.matrix(delta)) %*% (omega1 * tanh_prime(z1))
+       d_omega0 = t(as.matrix(delta)) %*% (omega1 * tanh_prime(z1)) %*% as.matrix(batch$X)
+       
+       # Update
+       beta1 <<- beta1 - alpha * as.vector(d_beta1)
+       omega1 <<- omega1 - alpha * as.vector(d_omega1)
+       beta0 <<- beta0 - alpha * as.vector(d_beta0)
+       omega0 <<- omega0 - alpha * as.vector(d_omega0)
+       
+     },
+     epoch = function() {
+       
+       # Create batch
+       rng_idx = sample(1:(nrow(training_data)))[1:nrow(training_data)/10]
+       c_batch = training_data[rng_idx,]
+       
+       forward(c_batch)
+       backward(c_batch)
+       
+     },
+     run_epochs = function(n) {
+       
+       for (i in 1:n) {
+         epoch()
+       }
+       
+     }
+   )
+)
+
+```
+
+```{r}
+
+mse = function(y, y_hat) {
+  return(mean((y - y_hat) ^ 2))
+}
+
+
+# Draw 100 samples from the sin function
+X = runif(100, 0, 10)
+Y = sin(X)
+
+# Split into training and validation
+data = data.frame(X, Y)
+training = data[1:floor(nrow(data)/2),]
+validation = data[floor((nrow(data)/2)+1):floor(nrow(data)),]
+
+my_net = nnh10$new(runif(10, -1, 1), runif(10, -1, 1), runif(10, -1, 1),
+                   runif(1, -1, 1), training, i_alpha = 0.1)
+
+rng_idx = sample(1:(nrow(training)))[1:(nrow(training)/10)]
+c_batch = training[rng_idx,]
+
+my_net$forward(c_batch)
+my_net$backward(c_batch)
+
+plotdata = data.frame(training, my_net$o)
+
+ggplot(plotdata) +
+  geom_point(aes(x = plotdata$X, y = plotdata$Y), color = "green") +
+  geom_point(aes(x = plotdata$X, y = plotdata$my_net.o), color = "red")
+
+my_net$forward(c_batch)
+
+```
+
+
+
+
+
