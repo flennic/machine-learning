@@ -6,6 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+library(ggplot2)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -36,9 +37,12 @@ nnh10 = setRefClass("nnh10",
      },
      forward = function(batch) {
        
-       z1 <<- as.matrix(batch$X) %*% t(as.matrix(omega0)) + beta0
+       #z1 <<- as.matrix(batch$X) %*% t(as.matrix(omega0)) + beta0
+       z1 <<- as.matrix(batch$X) %*% t(as.matrix(omega0)) +
+         matrix(beta0, ncol=10, nrow=length(batch$X), byrow=TRUE)
        h <<- tanh(z1)
-       o <<- h %*% as.matrix(omega1) + beta1
+       o <<- h %*% as.matrix(omega1) +
+         matrix(beta1, ncol=1, nrow=length(batch$X), byrow=TRUE)
        
      },
      backward = function(batch) {
@@ -48,9 +52,15 @@ nnh10 = setRefClass("nnh10",
        
        # Derivatives
        d_beta1 = mean(delta)
-       d_omega1 = t(d_beta1) %*% h
-       d_beta0 = t(as.matrix(delta)) %*% (omega1 * tanh_prime(z1))
-       d_omega0 = t(as.matrix(delta)) %*% (omega1 * tanh_prime(z1)) %*% as.matrix(batch$X)
+       d_omega1 = t(as.matrix(delta)) %*% h
+       #d_beta0 = t(as.matrix(delta)) %*% (omega1 * tanh_prime(z1))
+       d_beta0 = t(as.matrix(delta)) %*%
+         (matrix(t(omega1), ncol=10, nrow=length(batch$X), byrow=TRUE) *
+            tanh_prime(z1))
+       #d_omega0 = as.matrix(batch$X) %*% (t(as.matrix(delta)) %*%
+        # (matrix(t(omega1), ncol=10, nrow=length(batch$X), byrow=TRUE) *
+         #   tanh_prime(z1)))
+       d_omega0 = t(tanh_prime(z1) * (as.matrix(batch$X) %*% t(omega1))) %*% delta
        
        # Update
        beta1 <<- beta1 - alpha * as.vector(d_beta1)
@@ -72,6 +82,7 @@ nnh10 = setRefClass("nnh10",
      run_epochs = function(n) {
        
        for (i in 1:n) {
+         if(i%%1000 == 0) cat(paste("Starting epoch", i, "\n"))
          epoch()
        }
        
@@ -87,7 +98,6 @@ mse = function(y, y_hat) {
   return(mean((y - y_hat) ^ 2))
 }
 
-
 # Draw 100 samples from the sin function
 X = runif(100, 0, 10)
 Y = sin(X)
@@ -100,19 +110,23 @@ validation = data[floor((nrow(data)/2)+1):floor(nrow(data)),]
 my_net = nnh10$new(runif(10, -1, 1), runif(10, -1, 1), runif(10, -1, 1),
                    runif(1, -1, 1), training, i_alpha = 0.1)
 
-rng_idx = sample(1:(nrow(training)))[1:(nrow(training)/10)]
-c_batch = training[rng_idx,]
+my_net$run_epochs(50000)
 
-my_net$forward(c_batch)
-my_net$backward(c_batch)
+#rng_idx = sample(1:(nrow(training)))[1:(nrow(training)/10)]
+#c_batch = training[rng_idx,]
 
-plotdata = data.frame(training, my_net$o)
+#my_net$forward(c_batch)
+#my_net$backward(c_batch)
+
+my_net$forward(validation)
+
+plotdata = data.frame(validation, my_net$o)
 
 ggplot(plotdata) +
   geom_point(aes(x = plotdata$X, y = plotdata$Y), color = "green") +
   geom_point(aes(x = plotdata$X, y = plotdata$my_net.o), color = "red")
 
-my_net$forward(c_batch)
+#my_net$run_epochs(10000)
 
 ```
 

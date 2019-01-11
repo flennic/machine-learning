@@ -1,0 +1,13 @@
+base
+readxl
+ggplot2
+nlme
+mgcv
+cluster
+survival
+pamr
+knitr
+Matrix
+foreach
+glmnet
+kernlab
