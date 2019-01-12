@@ -298,15 +298,15 @@ c_adaBoost = blackboost(formula = c_formula,
                           control=boost_control(mstop=i))
 ```
 
-![Ada Boost Algorithm](ada_boost_algorithm.png)
+*Picture removed, see slides.*
 
 ### Forward Stagewise Additive Modeling
 
-![Forward Stagewise Additive Modeling](forward_stagewise_additive_modeling.png)
+*Picture removed, see slides.*
 
 ### Gradient Boosting
 
-![Gradient Boosting Algorithm](gradient_boosting_algorithm.png)
+*Picture removed, see slides.*
 
 ## Elastic Net
 
@@ -903,7 +903,7 @@ Limitations and Types
 
 ### Backpropagation Implementation
 
-![Backpropagartion Algorithm](backpropagation_algorithm.png)
+*Picture removed, see slides.*
 
 ```{r}
 # Helper function for the derivative
@@ -1141,7 +1141,7 @@ labs(color = "Legend")
 
 ### Regularization
 
-![Regularization](regularization.png)
+*Picture removed, see slides.*
 
 ## Partial Least Squares Regression (PLS)
 
@@ -1196,7 +1196,6 @@ cm_svm_05 = table(val_spam$type, model_svm_05_prediction)
 
 error_svm_05 = 1 - sum(diag(cm_svm_05)/sum(cm_svm_05))
 ```
-
 
 ## Trees
 
@@ -1310,11 +1309,11 @@ c_randomForest =
     randomForest(formula = c_formula, data = train_spambase, ntree = i)
 ```
 
-![Random Forest Algorithm](random_forest_algorithm.png)
+*Picture removed, see slides.*
 
 ### CART
 
-![Cart](cart.png)
+*Picture removed, see slides.*
 
 # Feature Reduction
 
@@ -2006,7 +2005,6 @@ c_best_subset_selection = function(Y, X) {
 }
 ```
 
-
 ### Nested Cross Validation
 
 ![Nested Cross Validation](nested_cross_validation.png)
@@ -2176,11 +2174,11 @@ pvalue(res)
 4. Assign each point to the cluster with the closest centroid
 5. Update the cluster centroids as the averages of the points assigned to each cluster
 
-![K-Means Algorithm](k_means_algorithm.png)
+*Picture removed, see slides.*
 
 ## Histogram, Moving Window and Kernel Density Estimation
 
-![Histogram, Moving Window and Kernel Density Estimation](histogram_moving_window_kernel_density_estimation.png)
+*Picture removed, see slides.*
 
 ### Density Estimation
 
@@ -2308,19 +2306,19 @@ ggplot(plot_data_frame) +
 
 ### Histogram, Moving Window and Kernel Regression
 
-![Histogram, Moving Window and Kernel Regression](histogram_moving_window_kernel_regression.png)
+*Picture removed, see slides.*
 
 ### Histogram Classification
 
-![Histogram Classification](histogram_classification.png)
+*Picture removed, see slides.*
 
 ### Moving Window Classification
 
-![Moving Window Classification](moving_window_classification.png)
+*Picture removed, see slides.*
 
 ### Kernel Classification
 
-![Kernel Classification](kernel_classification.png)
+*Picture removed, see slides.*
 
 
 ## Loss-Matrix
